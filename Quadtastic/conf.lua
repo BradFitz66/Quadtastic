@@ -4,7 +4,7 @@ function love.conf(t)
   -- The LÖVE version this game was made for (string)
   t.version = "0.10.1"
   -- Attach a console (boolean, Windows only)
-  t.console = false
+  t.console = true
   -- Enable the accelerometer on iOS and Android by exposing it as a Joystick (boolean)
   t.accelerometerjoystick = true
   -- True to save files (and read from the save directory) in external storage on Android (boolean)

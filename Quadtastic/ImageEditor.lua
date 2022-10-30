@@ -503,10 +503,10 @@ local function select_tool(app, gui_state, state, img_w, img_h)
     end
   end
 
+
   if not (gui_state.input.mouse.buttons[1] and
           gui_state.input.mouse.buttons[1].pressed)
   then
-
     if state.toolstate.mode == "selecting" then
       -- Add all quads to the selection that are enclosed in the dragged rect
       local rect = get_dragged_rect(state, gui_state)
@@ -574,10 +574,10 @@ local function handle_input(app, gui_state, state, img_w, img_h)
 
     -- If the middle mouse button was dragged in this scrollpane, pan the image
     -- by the dragged distance
-    if gui_state.input and gui_state.input.mouse.buttons[3] and
-       gui_state.input.mouse.buttons[3].pressed
+    if gui_state.input and gui_state.input.mouse.buttons[2] and
+       gui_state.input.mouse.buttons[2].pressed
     then
-      local button_state = gui_state.input.mouse.buttons[3]
+      local button_state = gui_state.input.mouse.buttons[2]
       if Scrollpane.is_mouse_inside_widget(gui_state, state.scrollpane_state,
                                            button_state.at_x, button_state.at_y)
       then

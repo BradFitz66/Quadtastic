@@ -145,6 +145,12 @@ function QuadtasticLogic.transitions(interface) return {
   end,
 
   sort = function(app, data, quads)
+    local ret,new_key
+    ret,new_key=interface.query(S.dialogs.rename.name_prompt, new_key,
+                                     {escape = S.buttons.cancel,
+                                      enter = S.buttons.ok})
+    --Time execution
+    local start_time = os.clock()
     if not quads then quads = data.selection:get_selection() end
     if #quads == 0 then return end
     -- Find the shared parent of the selected quads.
@@ -173,19 +179,7 @@ function QuadtasticLogic.transitions(interface) return {
       interface.show_dialog(S.dialogs.sort.err_no_numeric_quads)
       return
     end
-
-    -- Filter out non-quad elements and elements with non-numeric keys
-    for _,v in ipairs(quads) do
-      if libquadtastic.is_quad(v) and type(individual_keys[v]) == "number" then
-        table.insert(new_group, v)
-      end
-    end
-
-    -- Sort the quads
-    local function sort(quad_a, quad_b)
-      return quad_a.y < quad_b.y or quad_a.y == quad_b.y and quad_a.x < quad_b.x
-    end
-    table.sort(new_group, sort)
+    new_group=data.selection:sorted_selection()
 
     local do_action = function()
       -- Remove the quads from their parent
@@ -217,7 +211,9 @@ function QuadtasticLogic.transitions(interface) return {
     data.history:add(do_action, undo_action)
     do_action()
     if data.turbo_workflow then app.quadtastic.turbo_workflow_on_change() end
-
+    --Time execution
+    local end_time = os.clock()
+    print("Sort took " .. end_time - start_time .. " seconds")
   end,
 
   remove = function(app, data, quads)

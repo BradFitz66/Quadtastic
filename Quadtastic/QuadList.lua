@@ -115,6 +115,11 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
       end
     end
   end
+  if(UglyTestRect) then
+    --Draw uglytestrect(x,y,w,h)
+    love.graphics.setColor(255,0,0,255)
+    love.graphics.rectangle("line",UglyTestRect.x,UglyTestRect.y,UglyTestRect.w,UglyTestRect.h)
+  end
   return clicked_element, hovered_element, double_clicked_element
 end
 

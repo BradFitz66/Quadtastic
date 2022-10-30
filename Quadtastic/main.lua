@@ -40,7 +40,6 @@ local gui_state
 
 local version_url
 local checked_version = false
-
 function love.load()
   local version_info = common.get_version()
   love.window.setTitle(love.window.getTitle() .. " " .. version_info)
@@ -58,13 +57,13 @@ function love.load()
     local logfile = love.filesystem.getSaveDirectory() .. "/" .. "log.txt"
     io.output(logfile)
     io.output():setvbuf("no")
-    local lua_print = print
-    print = function(...)
-      -- Print to stdout but also to the log file
-      lua_print(...)
-      io.write(...)
-      io.write('\n')
-    end
+    -- local lua_print = print
+    -- print = function(...)
+    --   -- Print to stdout but also to the log file
+    --   lua_print(...)
+    --   io.write(...)
+    --   io.write('\n')
+    -- end
   end
 
   -- Initialize the exporters directory structure
@@ -312,70 +311,70 @@ function love.quit()
   end
 end
 
-function love.errhand(error_message)
-  local dialog_message = [[
-Quadtastic crashed with the following error message:
+-- function love.errhand(error_message)
+--   local dialog_message = [[
+-- Quadtastic crashed with the following error message:
 
-%s
+-- %s
 
-Would you like to report this crash so that it can be fixed?]]
-  local titles = {"Oh no", "Oh boy", "Bad news"}
-  local title = titles[love.math.random(#titles)]
-  local full_error = debug.traceback(error_message or "")
-  local message = string.format(dialog_message, full_error)
-  local buttons = {"Yes, on GitHub", "Yes, by email", "No"}
+-- Would you like to report this crash so that it can be fixed?]]
+--   local titles = {"Oh no", "Oh boy", "Bad news"}
+--   local title = titles[love.math.random(#titles)]
+--   local full_error = debug.traceback(tostring(error_message) or "")
+--   local message = string.format(dialog_message, full_error)
+--   local buttons = {"Yes, on GitHub", "Yes, by email", "No"}
 
-  local pressedbutton = love.window.showMessageBox(title, message, buttons)
-  local version
-  do
-    local success, more = pcall(common.get_version)
-    if success then version = more
-    else version = "Unknown version" end
-  end
-  local edition
-  do
-    local success, more = pcall(common.get_edition)
-    if success and more then edition = more
-    else edition = "Unknown edition" end
-  end
+--   local pressedbutton = love.window.showMessageBox(title, message, buttons)
+--   local version
+--   do
+--     local success, more = pcall(common.get_version)
+--     if success then version = more
+--     else version = "Unknown version" end
+--   end
+--   local edition
+--   do
+--     local success, more = pcall(common.get_edition)
+--     if success and more then edition = more
+--     else edition = "Unknown edition" end
+--   end
 
-  local function url_encode(text)
-    -- This is not complete. Depending on your issue text, you might need to
-    -- expand it!
-    text = string.gsub(text, "\n", "%%0A")
-    text = string.gsub(text, " ", "%%20")
-    text = string.gsub(text, "#", "%%23")
-    return text
-  end
+--   local function url_encode(text)
+--     -- This is not complete. Depending on your issue text, you might need to
+--     -- expand it!
+--     text = string.gsub(text, "\n", "%%0A")
+--     text = string.gsub(text, " ", "%%20")
+--     text = string.gsub(text, "#", "%%23")
+--     return text
+--   end
 
-  local issuebody = [[
-Quadtastic crashed with the following error message:
+--   local issuebody = [[
+-- Quadtastic crashed with the following error message:
 
-%s
+-- %s
 
-[If you can, describe what you've been doing when the error occurred]
+-- [If you can, describe what you've been doing when the error occurred]
 
----
-Affects: %s
-Edition: %s]]
-  if pressedbutton == 1 then
-    -- Surround traceback in ``` to get a Markdown code block
-    full_error = table.concat({"```",full_error,"```"}, "\n")
-    issuebody = string.format(issuebody, full_error, version, edition)
-    issuebody = url_encode(issuebody)
-    local subject = string.format("Crash in Quadtastic %s", version)
-    local url = string.format("https://www.github.com/25A0/Quadtastic/issues/new?title=%s&body=%s",
-                              subject, issuebody)
-    love.system.openURL(url)
-  elseif pressedbutton == 2 then
-    issuebody = string.format(issuebody, full_error, version, edition)
-    issuebody = url_encode(issuebody)
-    local subject = string.format("Crash in Quadtastic %s", version)
-    local url = string.format("mailto:moritz@25a0.com?subject=%s&body=%s",
-                              subject, issuebody)
-    love.system.openURL(url)
-  end
-end
+-- ---
+-- Affects: %s
+-- Edition: %s]]
+--   if pressedbutton == 1 then
+--     -- Surround traceback in ``` to get a Markdown code block
+--     full_error = table.concat({"```",full_error,"```"}, "\n")
+--     issuebody = string.format(issuebody, full_error, version, edition)
+--     issuebody = url_encode(issuebody)
+--     local subject = string.format("Crash in Quadtastic %s", version)
+--     local url = string.format("https://www.github.com/25A0/Quadtastic/issues/new?title=%s&body=%s",
+--                               subject, issuebody)
+--     love.system.openURL(url)
+--   elseif pressedbutton == 2 then
+--     issuebody = string.format(issuebody, full_error, version, edition)
+--     issuebody = url_encode(issuebody)
+--     local subject = string.format("Crash in Quadtastic %s", version)
+--     local url = string.format("mailto:moritz@25a0.com?subject=%s&body=%s",
+--                               subject, issuebody)
+--     love.system.openURL(url)
+--   end
+-- end
 
 -- Override isActive function to snooze app when it is not in focus.
 -- This is only noticeable in that the dashed lines around selected quads will
