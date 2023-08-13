@@ -306,8 +306,6 @@ Inputfield.draw = function(state, x, y, w, h, content, options)
       if imgui.was_key_pressed(state, "return") then
         committed_content = content
         imgui.consume_key_press(state, "return")
-        has_focus=false;
-        
       end
     else
       -- The widget does not have the keyboard focus

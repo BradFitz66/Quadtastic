@@ -22,7 +22,7 @@ local Dialog = require(current_folder .. ".Dialog")
 local Menu = require(current_folder .. ".Menu")
 local Keybindings = require(current_folder .. ".Keybindings")
 local S = require(current_folder .. ".strings")
-SortThreshold="15"
+SortThreshold = "15"
 local lfs = require("lfs")
 
 local settings_filename = "settings"
@@ -56,7 +56,7 @@ local function assert_sane_settings(user_settings)
     end
 
     -- Grid settings
-    settings.grid = {x = 8, y = 8, always_snap = false}
+    settings.grid = { x = 8, y = 8, always_snap = false }
     if user_settings.grid and type(user_settings.grid) == "table" then
         if user_settings.grid.x and type(user_settings.grid.x) == "number" then
             settings.grid.x = user_settings.grid.x
@@ -72,7 +72,7 @@ local function assert_sane_settings(user_settings)
             settings.grid.recent = {}
             for _, v in ipairs(user_settings.grid.recent) do
                 if type(v) == "table" and type(v.x) == "number" and type(v.y) == "number" then
-                    table.insert(settings.grid.recent, {x = v.x, y = v.y})
+                    table.insert(settings.grid.recent, { x = v.x, y = v.y })
                 end
             end
         end
@@ -81,13 +81,13 @@ local function assert_sane_settings(user_settings)
     -- If no recent grid elements were found, use a default set.
     if not settings.grid.recent then
         settings.grid.recent = {
-            {x = 4, y = 4},
-            {x = 8, y = 8},
-            {x = 12, y = 12},
-            {x = 16, y = 16},
-            {x = 20, y = 20},
-            {x = 24, y = 24},
-            {x = 32, y = 32}
+            { x = 4,  y = 4 },
+            { x = 8,  y = 8 },
+            { x = 12, y = 12 },
+            { x = 16, y = 16 },
+            { x = 20, y = 20 },
+            { x = 24, y = 24 },
+            { x = 32, y = 32 }
         }
     end
 
@@ -97,10 +97,10 @@ end
 local function load_settings()
     local success, more =
         pcall(
-        function()
-            return require(settings_filename)
-        end
-    )
+            function()
+                return require(settings_filename)
+            end
+        )
 
     if success then
         return assert_sane_settings(more)
@@ -113,11 +113,11 @@ end
 local function store_settings(settings)
     local success, more =
         pcall(
-        function()
-            local content = common.serialize_table(settings)
-            love.filesystem.write(settings_filename .. ".lua", content)
-        end
-    )
+            function()
+                local content = common.serialize_table(settings)
+                love.filesystem.write(settings_filename .. ".lua", content)
+            end
+        )
 
     if not success then
         print("Warning: Could not store settings. " .. more)
@@ -131,22 +131,22 @@ end
 
 local Quadtastic =
     State(
-    "quadtastic",
-    nil,
-    -- initial data
-    {
-        display = {
-            zoom = 1 -- additional zoom factor for the displayed image
-        },
-        scrollpane_state = nil,
-        quad_scrollpane_state = nil,
-        settings = load_settings() or get_default_settings(),
-        collapsed_groups = {},
-        selection = Selection(),
-        exporters = {}
-        -- More fields are initialized in the new() transition.
-    }
-)
+        "quadtastic",
+        nil,
+        -- initial data
+        {
+            display = {
+                zoom = 1 -- additional zoom factor for the displayed image
+            },
+            scrollpane_state = nil,
+            quad_scrollpane_state = nil,
+            settings = load_settings() or get_default_settings(),
+            collapsed_groups = {},
+            selection = Selection(),
+            exporters = {}
+            -- More fields are initialized in the new() transition.
+        }
+    )
 
 function Quadtastic.reset_view(state)
     state.scrollpane_state = Scrollpane.init_scrollpane_state()
@@ -209,30 +209,30 @@ Quadtastic.draw = function(app, state, gui_state)
         imgui.show_toast(gui_state, S.toast.exporters_reloaded(exporter_count), nil, toast_default_time)
     end
 
-	local incorrect_input_toast_callback = function()
-		imgui.show_toast(gui_state, "Incorrect input on sort threshold input(must be number)", nil, toast_default_time)
-	end
+    local incorrect_input_toast_callback = function()
+        imgui.show_toast(gui_state, "Incorrect input on sort threshold input(must be number)", nil, toast_default_time)
+    end
 
     local w, h = gui_state.transform:unproject_dimensions(love.graphics.getWidth(), love.graphics.getHeight())
     love.graphics.clear(gui_state.style.palette.shades.bright)
     local win_x, win_y = 0, 0
     do
-        Window.start(gui_state, win_x, win_y, w, h, {margin = 2, active = true, borderless = true})
+        Window.start(gui_state, win_x, win_y, w, h, { margin = 2, active = true, borderless = true })
         local was_menu_open = imgui.is_any_menu_open(gui_state)
 
         do
             Menu.menubar_start(gui_state, w, 12)
             if Menu.menu_start(gui_state, w / 4, h - 12, S.menu.file()) then
-                if Menu.action_item(gui_state, S.menu.file.new, {keybinding = Keybindings.to_string("new")}) then
+                if Menu.action_item(gui_state, S.menu.file.new, { keybinding = Keybindings.to_string("new") }) then
                     app.quadtastic.new()
                 end
-                if Menu.action_item(gui_state, S.menu.file.open, {keybinding = Keybindings.to_string("open")}) then
+                if Menu.action_item(gui_state, S.menu.file.open, { keybinding = Keybindings.to_string("open") }) then
                     app.quadtastic.choose_quad()
                 end
-                if Menu.action_item(gui_state, S.menu.file.save, {keybinding = Keybindings.to_string("save")}) then
+                if Menu.action_item(gui_state, S.menu.file.save, { keybinding = Keybindings.to_string("save") }) then
                     app.quadtastic.save(save_toast_callback)
                 end
-                if Menu.action_item(gui_state, S.menu.file.save_as, {keybinding = Keybindings.to_string("save_as")}) then
+                if Menu.action_item(gui_state, S.menu.file.save_as, { keybinding = Keybindings.to_string("save_as") }) then
                     app.quadtastic.save_as(save_toast_callback)
                 end
                 if
@@ -244,7 +244,7 @@ Quadtastic.draw = function(app, state, gui_state)
                             keybinding = Keybindings.to_string("export")
                         }
                     )
-                 then
+                then
                     app.quadtastic.repeat_export(export_toast_callback)
                 end
                 if Menu.menu_start(gui_state, w / 4, h - 12, S.menu.file.export_as()) then
@@ -278,7 +278,7 @@ Quadtastic.draw = function(app, state, gui_state)
                     end
                 end
                 Menu.separator(gui_state)
-                if Menu.action_item(gui_state, S.menu.file.quit, {keybinding = Keybindings.to_string("quit")}) then
+                if Menu.action_item(gui_state, S.menu.file.quit, { keybinding = Keybindings.to_string("quit") }) then
                     love.event.quit()
                 end
                 Menu.menu_finish(gui_state, w / 4, h - 12)
@@ -293,7 +293,7 @@ Quadtastic.draw = function(app, state, gui_state)
                             keybinding = Keybindings.to_string("undo")
                         }
                     )
-                 then
+                then
                     app.quadtastic.undo()
                 end
                 if
@@ -305,7 +305,7 @@ Quadtastic.draw = function(app, state, gui_state)
                             keybinding = Keybindings.to_string("redo")
                         }
                     )
-                 then
+                then
                     app.quadtastic.redo()
                 end
 
@@ -316,9 +316,9 @@ Quadtastic.draw = function(app, state, gui_state)
                         Menu.action_item(
                             gui_state,
                             S.menu.edit.grid.always_snap,
-                            {checkbox = {checked = state.settings.grid.always_snap}}
+                            { checkbox = { checked = state.settings.grid.always_snap } }
                         )
-                     then
+                    then
                         state.settings.grid.always_snap = not state.settings.grid.always_snap
                         store_settings(state.settings)
                     end
@@ -327,7 +327,7 @@ Quadtastic.draw = function(app, state, gui_state)
                             -- Add one disabled entry for the current setting
                             local size_string =
                                 string.format("%dx%d (current)", state.settings.grid.x, state.settings.grid.y)
-                            Menu.action_item(gui_state, size_string, {disabled = true})
+                            Menu.action_item(gui_state, size_string, { disabled = true })
                         end
 
                         -- List recently used grid configurations
@@ -360,7 +360,7 @@ Quadtastic.draw = function(app, state, gui_state)
                 local latest = state.file_timestamps.image_latest
                 local can_reload = loaded and latest and loaded ~= latest
                 local disabled = not can_reload or not state.quads._META.image_path
-                if Menu.action_item(gui_state, S.menu.image.reload_image, {disabled = disabled}) then
+                if Menu.action_item(gui_state, S.menu.image.reload_image, { disabled = disabled }) then
                     app.quadtastic.load_image(state.quads._META.image_path, reload_image_toast_callback)
                 end
                 Menu.menu_finish(gui_state, w / 4, h - 12)
@@ -429,9 +429,9 @@ Quadtastic.draw = function(app, state, gui_state)
                         nil,
                         nil,
                         gui_state.style.quads.tools.select,
-                        {pressed = state.tool == "select"}
+                        { pressed = state.tool == "select" }
                     )
-                 then
+                then
                     app.quadtastic.switch_tool("select")
                 end
                 Tooltip.draw(gui_state, S.tooltips.select_tool)
@@ -446,9 +446,9 @@ Quadtastic.draw = function(app, state, gui_state)
                         nil,
                         nil,
                         gui_state.style.quads.tools.create,
-                        {pressed = state.tool == "create"}
+                        { pressed = state.tool == "create" }
                     )
-                 then
+                then
                     app.quadtastic.switch_tool("create")
                 end
                 Tooltip.draw(gui_state, S.tooltips.create_tool)
@@ -463,9 +463,9 @@ Quadtastic.draw = function(app, state, gui_state)
                         nil,
                         nil,
                         gui_state.style.quads.tools.border,
-                        {pressed = state.tool == "border"}
+                        { pressed = state.tool == "border" }
                     )
-                 then
+                then
                     app.quadtastic.switch_tool("border")
                     imgui.show_toast(gui_state, "NYI", nil, 2)
                 end
@@ -481,9 +481,9 @@ Quadtastic.draw = function(app, state, gui_state)
                         nil,
                         nil,
                         gui_state.style.quads.tools.strip,
-                        {pressed = state.tool == "strip"}
+                        { pressed = state.tool == "strip" }
                     )
-                 then
+                then
                     app.quadtastic.switch_tool("strip")
                     imgui.show_toast(gui_state, "NYI", nil, 2)
                 end
@@ -499,9 +499,9 @@ Quadtastic.draw = function(app, state, gui_state)
                         nil,
                         nil,
                         gui_state.style.quads.tools.wand,
-                        {pressed = state.tool == "wand"}
+                        { pressed = state.tool == "wand" }
                     )
-                 then
+                then
                     app.quadtastic.switch_tool("wand")
                 end
                 Tooltip.draw(gui_state, S.tooltips.wand_tool)
@@ -516,9 +516,9 @@ Quadtastic.draw = function(app, state, gui_state)
                         nil,
                         nil,
                         gui_state.style.quads.tools.palette,
-                        {pressed = state.tool == "palette"}
+                        { pressed = state.tool == "palette" }
                     )
-                 then
+                then
                     app.quadtastic.switch_tool("palette")
                 end
                 Tooltip.draw(gui_state, S.tooltips.palette_tool)
@@ -544,7 +544,7 @@ Quadtastic.draw = function(app, state, gui_state)
                             gui_state.layout.max_w,
                             gui_state.layout.max_h,
                             S.image_editor_no_image,
-                            {alignment_h = ":", alignment_v = "-"}
+                            { alignment_h = ":", alignment_v = "-" }
                         )
                         imgui.pop_style(gui_state, "font")
                     end
@@ -559,15 +559,15 @@ Quadtastic.draw = function(app, state, gui_state)
                     do
                         local pressed =
                             Button.draw(
-                            gui_state,
-                            nil,
-                            nil,
-                            nil,
-                            nil,
-                            nil,
-                            gui_state.style.quads.buttons.plus,
-                            {disabled = disable_zoom_buttons}
-                        )
+                                gui_state,
+                                nil,
+                                nil,
+                                nil,
+                                nil,
+                                nil,
+                                gui_state.style.quads.buttons.plus,
+                                { disabled = disable_zoom_buttons }
+                            )
                         if pressed then
                             ImageEditor.zoom(state, 1)
                         end
@@ -577,15 +577,15 @@ Quadtastic.draw = function(app, state, gui_state)
                     do
                         local pressed =
                             Button.draw(
-                            gui_state,
-                            nil,
-                            nil,
-                            nil,
-                            nil,
-                            nil,
-                            gui_state.style.quads.buttons.minus,
-                            {disabled = disable_zoom_buttons}
-                        )
+                                gui_state,
+                                nil,
+                                nil,
+                                nil,
+                                nil,
+                                nil,
+                                gui_state.style.quads.buttons.minus,
+                                { disabled = disable_zoom_buttons }
+                            )
                         if pressed then
                             ImageEditor.zoom(state, -1)
                         end
@@ -651,19 +651,19 @@ Quadtastic.draw = function(app, state, gui_state)
                         local clicked, hovered, double_clicked =
                             QuadList.draw(gui_state, state, nil, nil, nil, gui_state.layout.max_h - 33, state.hovered)
                         if clicked then
-                            local new_quads = {clicked}
+                            local new_quads = { clicked }
                             -- If shift was pressed, select all quads between the clicked one and
                             -- the last quad that was clicked
                             if
                                 gui_state.input and
-                                    (imgui.is_key_pressed(gui_state, "lshift") or
-                                        imgui.is_key_pressed(gui_state, "rshift")) and
-                                    state.previous_clicked
-                             then
+                                (imgui.is_key_pressed(gui_state, "lshift") or
+                                    imgui.is_key_pressed(gui_state, "rshift")) and
+                                state.previous_clicked
+                            then
                                 -- Make sure that the new quad and the last quads are child of the
                                 -- same parent
-                                local previous_keys = {table.find_key(state.quads, state.previous_clicked)}
-                                local new_keys = {table.find_key(state.quads, clicked)}
+                                local previous_keys = { table.find_key(state.quads, state.previous_clicked) }
+                                local new_keys = { table.find_key(state.quads, clicked) }
                                 -- Remove the last keys since they will likely differ
                                 local previous_key = table.remove(previous_keys)
                                 local new_key = table.remove(new_keys)
@@ -706,9 +706,9 @@ Quadtastic.draw = function(app, state, gui_state)
 
                             if
                                 gui_state.input and
-                                    (imgui.is_key_pressed(gui_state, "lctrl") or
-                                        imgui.is_key_pressed(gui_state, "rctrl"))
-                             then
+                                (imgui.is_key_pressed(gui_state, "lctrl") or
+                                    imgui.is_key_pressed(gui_state, "rctrl"))
+                            then
                                 if #new_quads == 1 and state.selection:is_selected(clicked) then
                                     state.selection:deselect(new_quads)
                                 else
@@ -735,7 +735,7 @@ Quadtastic.draw = function(app, state, gui_state)
 
                         if double_clicked then
                             -- Set the selection to the double-clicked element
-                            state.selection:set_selection({double_clicked})
+                            state.selection:set_selection({ double_clicked })
                             -- Open a rename dialog for the clicked element
                             app.quadtastic.rename(state.selection:get_selection())
                         end
@@ -758,7 +758,7 @@ Quadtastic.draw = function(app, state, gui_state)
                                     disabled = state.prev_exporter == nil
                                 }
                             )
-                         then
+                        then
                             app.quadtastic.repeat_export(export_toast_callback)
                         end
 
@@ -800,38 +800,37 @@ Quadtastic.draw = function(app, state, gui_state)
                     -- Draw button column
                     do
                         Layout.start(gui_state)
-                        if Button.draw(gui_state, nil, nil, nil, nil, nil, gui_state.style.quads.buttons.rename) then
+                        if Button.draw(gui_state, nil, nil, nil, nil, nil,
+                                gui_state.style.quads.buttons.rename)
+                        then
                             app.quadtastic.rename(state.selection:get_selection())
                         end
                         Tooltip.draw(gui_state, S.tooltips.rename)
                         Layout.next(gui_state, "|")
-                        if Button.draw(gui_state, nil, nil, nil, nil, nil, gui_state.style.quads.buttons.delete) then
+                        if Button.draw(gui_state, nil, nil, nil, nil, nil,
+                            gui_state.style.quads.buttons.delete)
+                        then
                             app.quadtastic.remove(state.selection:get_selection())
                         end
                         Tooltip.draw(gui_state, S.tooltips.delete)
                         Layout.next(gui_state, "|")
-                        if Button.draw(gui_state, nil, nil, nil, nil, nil, gui_state.style.quads.buttons.sort) then
-                        	app.quadtastic.sort(state.selection:get_selection())
+                        if Button.draw(gui_state, nil, nil, nil, nil, nil,
+                                gui_state.style.quads.buttons.sort)
+                        then
+                            app.quadtastic.sort(state.selection:get_selection())
                         end
                         Tooltip.draw(gui_state, S.tooltips.sort)
                         Layout.next(gui_state, "|")
-						local commited
-						SortThreshold,commited=InputField.draw(gui_state, nil, nil,40, 24,SortThreshold,{forced_keyboard_focus = false,select_all = false})
-						if(commited) then
-							if(SortThreshold:match("^%-?%d+$")==nil) then
-								incorrect_input_toast_callback()
-								SortThreshold="15"
-							end
-						end			
-						Tooltip.draw(gui_state, "Threshold for height difference to detect rows")
-						Layout.next(gui_state, "|")
-
-                        if Button.draw(gui_state, nil, nil, nil, nil, nil, gui_state.style.quads.buttons.group) then
+                        if Button.draw(gui_state, nil, nil, nil, nil, nil,
+                                gui_state.style.quads.buttons.group)
+                        then
                             app.quadtastic.group(state.selection:get_selection())
                         end
                         Tooltip.draw(gui_state, S.tooltips.group)
                         Layout.next(gui_state, "|")
-                        if Button.draw(gui_state, nil, nil, nil, nil, nil, gui_state.style.quads.buttons.ungroup) then
+                        if Button.draw(gui_state, nil, nil, nil, nil, nil,
+                                gui_state.style.quads.buttons.ungroup)
+                        then
                             app.quadtastic.ungroup(state.selection:get_selection())
                         end
                         Tooltip.draw(gui_state, S.tooltips.ungroup)
@@ -854,7 +853,7 @@ Quadtastic.draw = function(app, state, gui_state)
             imgui.uncover_input(gui_state)
         end
     end
-    Window.finish(gui_state, win_x, win_y, nil, {active = true, borderless = true})
+    Window.finish(gui_state, win_x, win_y, nil, { active = true, borderless = true })
 
     local function refresh_image_timestamp(data)
         if not data.quads._META or not data.quads._META.image_path then
