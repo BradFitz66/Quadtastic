@@ -191,8 +191,8 @@ local function get_dragged_rect(state, gui_state, img_w, img_h)
             y = y,
             w = w,
             h = h,
-            ox = 0,
-            oy = 0
+            ox = 0.5,
+            oy = 0.5
         }
     else
         return nil
@@ -325,6 +325,7 @@ local function wand_tool(app, gui_state, state)
                 quad = Grid.expand_rect(state.settings.grid, quad)
             end
             if quad then
+                print(quad.x, quad.y, quad.w, quad.h, quad.ox, quad.oy)
                 draw_dashed_line(quad, gui_state, state.display.zoom)
                 gui_state.mousestring = string.format("%dx%d", quad.w, quad.h)
                 if gui_state.input.mouse.buttons[1] and gui_state.input.mouse.buttons[1].presses >= 1 then
@@ -443,7 +444,9 @@ local function select_tool(app, gui_state, state, img_w, img_h)
                             x = v.x,
                             y = v.y,
                             w = v.w,
-                            h = v.h
+                            h = v.h,
+                            ox = v.ox,
+                            oy = v.oy
                         }
                     end
                 end
@@ -482,7 +485,9 @@ local function select_tool(app, gui_state, state, img_w, img_h)
                                         if libquadtastic.is_quad(v) then
                                             state.toolstate.original_pos[i] = {
                                                 x = v.ox* v.w,
-                                                y = v.oy* v.h
+                                                y = v.oy* v.h,
+                                                ox = v.ox,
+                                                oy = v.oy
                                             }
                                         end
                                     end
@@ -580,6 +585,8 @@ local function select_tool(app, gui_state, state, img_w, img_h)
             app.quadtastic.commit_movement(state.selection:get_selection(), state.toolstate.original_pos)
         elseif state.toolstate.mode == "resizing" then
             app.quadtastic.commit_resizing(state.selection:get_selection(), state.toolstate.original_quad)
+        elseif state.toolstate.mode == "moving_origin" then
+            app.quadtastic.commit_origin_movement(state.selection:get_selection(), state.toolstate.original_pos)
         end
         state.toolstate.mode = nil
     end

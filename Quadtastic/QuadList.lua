@@ -51,12 +51,14 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
                     gui_state.layout.max_w, 
                     nil, 
                     string.format(
-                      "%s: x%d y%d  %dx%d",
+                      "%s: x%d y%d  %dx%d ox%.2f oy%.2f",
                       tostring(name), 
                       element.x, 
                       element.y, 
                       element.w, 
-                      element.h)
+                      element.h,
+                      element.ox,
+                      element.oy)
                     )
                         
                 else
@@ -98,7 +100,9 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
                 x = gui_state.layout.next_x,
                 y = gui_state.layout.next_y,
                 w = gui_state.layout.adv_x,
-                h = gui_state.layout.adv_y
+                h = gui_state.layout.adv_y,
+                ox = 0,
+                oy = 0
             }
 
             -- Check if the mouse was clicked on this list entry
@@ -147,7 +151,7 @@ QuadList.draw = function(gui_state, state, x, y, w, h, last_hovered)
         do
             state.quad_scrollpane_state = Scrollpane.start(gui_state, nil, nil, nil, nil, state.quad_scrollpane_state)
             do
-                Layout.start(gui_state, nil, nil, nil, nil, {
+                Layout.start(gui_state, nil, nil, 180, nil, {
                     noscissor = true
                 })
                 clicked, hovered, double_clicked = draw_elements(gui_state, state, state.quads, last_hovered,
@@ -158,7 +162,7 @@ QuadList.draw = function(gui_state, state, x, y, w, h, last_hovered)
             -- possible
             state.quad_scrollpane_state.min_x = 0
             state.quad_scrollpane_state.min_y = 0
-            state.quad_scrollpane_state.max_x = gui_state.layout.adv_x
+            state.quad_scrollpane_state.max_x = gui_state.layout.adv_x+20
             state.quad_scrollpane_state.max_y = math.max(gui_state.layout.adv_y, gui_state.layout.max_h)
         end
         Scrollpane.finish(gui_state, state.quad_scrollpane_state)

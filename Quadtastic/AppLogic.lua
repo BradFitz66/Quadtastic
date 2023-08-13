@@ -88,6 +88,7 @@ setmetatable(AppLogic, {
             end
           end})
         else
+          print(key)
           error(string.format("There is no state %s in the current application.", key))
         end
       end

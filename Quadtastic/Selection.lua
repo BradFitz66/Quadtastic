@@ -25,12 +25,14 @@ Selection.deselect = function(self, quads)
     for _, v in ipairs(quads) do self.selection[v] = nil end
 end
 
-Selection.get_selection = function(self) return table.keys(self.selection) end
+Selection.get_selection = function(self)
+    return table.keys(self.selection)
+end
 
 
 --[[
   Unused, was created for testing my theory of if creating a bounding box
-  around the selection and then sorting the quads by the distance from 
+  around the selection and then sorting the quads by the distance from
   their top left corner to the top left corner of the bounding box would
   work better than the now old method of sorting by y position and then x
   position.
@@ -39,12 +41,14 @@ Selection.get_selection = function(self) return table.keys(self.selection) end
 ]]
 Selection.get_selection_bounds = function(self)
     local min_x, min_y, max_x, max_y = math.huge, math.huge, -math.huge,
-                                       -math.huge
+        -math.huge
     for _, v in ipairs(self:get_selection()) do
         local x = v.x
         local y = v.y
         local w = v.w
         local h = v.h
+        local ox = v.ox
+        local oy = v.oy
         -- Create minimum bounding box around all selected quads
         min_x = math.min(min_x, x)
         min_y = math.min(min_y, y)
@@ -55,8 +59,16 @@ Selection.get_selection_bounds = function(self)
 end
 
 -- Returns a table of quads sorted using the row major order method
-Selection.sorted_selection = function(self)
+Selection.sorted_selection_topleft = function(self)
+    local function sort(quad_a, quad_b)
+        return quad_a.y < quad_b.y or quad_a.y == quad_b.y and quad_a.x < quad_b.x
+    end
+    local sorted_quads = self:get_selection()
+    table.sort(sorted_quads, sort)
+    return sorted_quads
+end
 
+Selection.sorted_selection_rowmajor = function(self)
     local rows = {}
     local row_threshold = 15
     -- Loop through selection and get rows by finding quads with the same y value or within a certain threshold
@@ -72,7 +84,7 @@ Selection.sorted_selection = function(self)
             table.insert(rows, row)
         end
     end
-    print("Rows found: " .. #rows)
+    print("After loop")
     -- Sort rows by y value
     table.sort(rows, function(a, b) return a[1].y < b[1].y end)
     -- Sort each row by x value
@@ -87,16 +99,18 @@ Selection.sorted_selection = function(self)
     return sorted_quads
 end
 
+
+
 Selection.new = function(_)
     local selection = {
         selection = {} -- the actual table that contains selected elements
     }
 
-    setmetatable(selection, {__index = Selection})
+    setmetatable(selection, { __index = Selection })
 
     return selection
 end
 
-setmetatable(Selection, {__call = Selection.new})
+setmetatable(Selection, { __call = Selection.new })
 
 return Selection

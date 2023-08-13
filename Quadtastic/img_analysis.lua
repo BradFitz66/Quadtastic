@@ -253,6 +253,8 @@ function analysis.outter_bounding_box(image_or_imagedata, mx, my)
     y = result_chunk.min_y,
     w = 1 + result_chunk.max_x - result_chunk.min_x,
     h = 1 + result_chunk.max_y - result_chunk.min_y,
+    ox = 0.5,
+    oy = 0.5,
   }
 end
 
@@ -371,6 +373,8 @@ local function collect_chunks(img, x, y, w, h, condition, states)
         y = chunk.min_y,
         w = 1 + chunk.max_x - chunk.min_x,
         h = 1 + chunk.max_y - chunk.min_y,
+        ox = 0.5,
+        oy = 0.5,
       })
     end
   end

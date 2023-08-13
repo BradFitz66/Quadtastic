@@ -648,6 +648,7 @@ Quadtastic.draw = function(app, state, gui_state)
                     do
                         Layout.start(gui_state, nil, nil, gui_state.layout.max_w - 21)
                         -- Draw the list of quads
+--gui_state, state, x, y, w, h, last_hovered                        
                         local clicked, hovered, double_clicked =
                             QuadList.draw(gui_state, state, nil, nil, nil, gui_state.layout.max_h - 33, state.hovered)
                         if clicked then
@@ -814,13 +815,24 @@ Quadtastic.draw = function(app, state, gui_state)
                         end
                         Tooltip.draw(gui_state, S.tooltips.delete)
                         Layout.next(gui_state, "|")
+
                         if Button.draw(gui_state, nil, nil, nil, nil, nil,
                                 gui_state.style.quads.buttons.sort)
                         then
-                            app.quadtastic.sort(state.selection:get_selection())
-                        end
+                            app.quadtastic.sort(state.selection:get_selection(),"topleft")
+                        end                        
                         Tooltip.draw(gui_state, S.tooltips.sort)
                         Layout.next(gui_state, "|")
+
+                        if Button.draw(gui_state, nil, nil, nil, nil, nil,
+                                gui_state.style.quads.buttons.sort)
+                        then
+                            print("!")
+                            app.quadtastic.sort(state.selection:get_selection(),"row-major")
+                        end
+                        Tooltip.draw(gui_state, "Sort via row-major ordering")
+                        Layout.next(gui_state, "|")
+
                         if Button.draw(gui_state, nil, nil, nil, nil, nil,
                                 gui_state.style.quads.buttons.group)
                         then
@@ -828,6 +840,7 @@ Quadtastic.draw = function(app, state, gui_state)
                         end
                         Tooltip.draw(gui_state, S.tooltips.group)
                         Layout.next(gui_state, "|")
+
                         if Button.draw(gui_state, nil, nil, nil, nil, nil,
                                 gui_state.style.quads.buttons.ungroup)
                         then

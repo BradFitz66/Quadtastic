@@ -76,6 +76,8 @@ function Grid.expand_rect(grid, rect)
   -- width that does not include the entire sprite.
   grid_rect.w = math.max(grid.x, grid.x * math.ceil(min_w / grid.x))
   grid_rect.h = math.max(grid.y, grid.y * math.ceil(min_h / grid.y))
+  grid_rect.ox = 0.5
+  grid_rect.oy = 0.5
 
   return grid_rect
 end

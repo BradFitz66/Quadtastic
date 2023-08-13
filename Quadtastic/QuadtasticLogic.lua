@@ -146,13 +146,13 @@ function QuadtasticLogic.transitions(interface)
             end
         end,
 
-        sort = function(app, data, quads)
-            local ret, new_key
-            ret, new_key = interface.query(S.dialogs.rename.name_prompt, new_key,
-                {
-                    escape = S.buttons.cancel,
-                    enter = S.buttons.ok
-                })
+        sort = function(app, data, quads, sort_type)
+            -- local ret, new_key
+            -- ret, new_key = interface.query(S.dialogs.rename.name_prompt, new_key,
+            --     {
+            --         escape = S.buttons.cancel,
+            --         enter = S.buttons.ok
+            --     })
             --Time execution
             local start_time = os.clock()
             if not quads then quads = data.selection:get_selection() end
@@ -183,7 +183,36 @@ function QuadtasticLogic.transitions(interface)
                 interface.show_dialog(S.dialogs.sort.err_no_numeric_quads)
                 return
             end
-            new_group = data.selection:sorted_selection()
+            for _, v in ipairs(quads) do
+                if libquadtastic.is_quad(v) and type(individual_keys[v]) == "number" then
+                    table.insert(new_group, v)
+                end
+            end
+            if (sort_type == "row-major") then
+                ::show_dialog:: --Very ugly way to reveal the dialog again if the user enters a non-number
+                local ret
+                local new_key = "15"
+                ret, new_key = interface.query("Row distance threshold \n Sprites that have a Y position distance below or equal to this threshold will be considered on the same row", new_key,
+                    {
+                        escape = S.buttons.cancel,
+                        enter = S.buttons.ok
+                    })
+                --Make sure the user entered a number
+                if (tonumber(new_key) == nil) then
+                    local a = interface.show_dialog("Please enter a number")
+                    if(a == "OK") then
+                        goto show_dialog
+                    end
+                    return
+                end
+                if(ret == "OK") then
+                    new_group = data.selection:sorted_selection_rowmajor(tonumber(new_key))
+                else
+                    return
+                end
+            else
+                new_group = data.selection:sorted_selection_topleft()
+            end
 
             local do_action = function()
                 -- Remove the quads from their parent
@@ -198,7 +227,6 @@ function QuadtasticLogic.transitions(interface)
                     table.insert(shared_parent, v)
                 end
             end
-
             local undo_action = function()
                 for _, v in ipairs(new_group) do
                     -- Remove the quad from its shared parent, starting at the end
@@ -388,9 +416,8 @@ function QuadtasticLogic.transitions(interface)
                 local quad = quads[i]
                 local pos = original_pos[i]
                 if libquadtastic.is_quad(quad) then
-
-                    quad.ox = (pos.x + dx)/ quad.w
-                    quad.oy = (pos.y + dy)/ quad.h
+                    quad.ox = (pos.x + dx) / quad.w
+                    quad.oy = (pos.y + dy) / quad.h
 
 
                     -- Clamp the coordinates between 0 and 1
@@ -438,6 +465,43 @@ function QuadtasticLogic.transitions(interface)
                     if libquadtastic.is_quad(quads[i]) then
                         quads[i].x = quads[i].x - deltas[i].x
                         quads[i].y = quads[i].y - deltas[i].y
+                    end
+                end
+            end
+
+            data.history:add(do_action, undo_action)
+            -- Note that we deliberately do not call the do_action here, since the quads
+            -- are already at the position where the user wants them.
+            if data.turbo_workflow then app.quadtastic.turbo_workflow_on_change() end
+        end,
+
+        commit_origin_movement = function(app, data, quads, original_pos)
+            local deltas = {} -- table containing for each quad how far it was moved
+            assert(#quads == #original_pos)
+
+            for i = 1, #quads do
+                if libquadtastic.is_quad(quads[i]) then
+                    deltas[i] = {
+                        x = quads[i].ox - original_pos[i].ox,
+                        y = quads[i].oy - original_pos[i].oy
+                    }
+                end
+            end
+
+            local do_action = function()
+                for i = 1, #quads do
+                    if libquadtastic.is_quad(quads[i]) then
+                        quads[i].ox = quads[i].ox + deltas[i].x
+                        quads[i].oy = quads[i].oy + deltas[i].y
+                    end
+                end
+            end
+
+            local undo_action = function()
+                for i = 1, #quads do
+                    if libquadtastic.is_quad(quads[i]) then
+                        quads[i].ox = quads[i].ox - deltas[i].x
+                        quads[i].oy = quads[i].oy - deltas[i].y
                     end
                 end
             end

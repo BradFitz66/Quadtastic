@@ -129,7 +129,6 @@ end
 function tableplus.contains(t, what)
   --Check if t contains what assuming what is a table
   for _, v in pairs(t) do
-    print(v,what)
     if table.equals(v, what,true) then return true end
   end
   return false
