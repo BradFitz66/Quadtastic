@@ -55,9 +55,11 @@ function common.split(filepath)
 end
 
 local function export_quad(handle, quadtable)
-  handle(string.format(
-    "{x = %d, y = %d, w = %d, h = %d}",
-    quadtable.x, quadtable.y, quadtable.w, quadtable.h))
+  local formatted_string = string.format(
+    "{x = %d, y = %d, w = %d, h = %d, ox = %f, oy = %f}",
+    quadtable.x, quadtable.y, quadtable.w, quadtable.h, quadtable.ox, quadtable.oy)
+  print(formatted_string)
+  handle(formatted_string)
 end
 
 -- Checks if a given string qualifies as a Lua Name, see "Lexical Conventions"

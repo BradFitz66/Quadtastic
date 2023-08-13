@@ -377,6 +377,42 @@ function QuadtasticLogic.transitions(interface) return {
       end
     end
   end,
+  
+  move_origin = function(app, data, quads, original_pos, dx, dy, img_w, img_h, snap_to_grid)
+    if not quads then quads = data.selection:get_selection() end
+    if #quads == 0 then return end
+    assert(#quads == #original_pos)
+
+    for i=1,#quads do
+      local quad = quads[i]
+      local pos = original_pos[i]
+      if libquadtastic.is_quad(quad) then
+        local mx = pos.x * quad.w
+        local my = pos.y * quad.h
+
+
+        -- Calculate offset position and then calculate relative position of that offset
+        local ox = pos.x + dx
+        local oy = pos.y + dy
+        quad.ox = ox / quad.w
+        quad.oy = oy / quad.h
+        print(ox)
+
+
+        -- Clamp the coordinates between 0 and 1
+        quad.ox = math.max(0, math.min(1, quad.ox))
+        quad.oy = math.max(0, math.min(1, quad.oy))
+
+        if snap_to_grid then
+          print("snap")
+          -- Round ox and oy to nearest 0.25
+          quad.ox = 0.25 * math.floor(quad.ox / 0.25 + 0.5)
+          quad.oy = 0.25 * math.floor(quad.oy / 0.25 + 0.5)
+        end
+
+      end
+    end
+  end,
 
   -- Finishes moving the given quad. Without calling this function the movements
   -- that were made with move_quads are not added to the undo history.

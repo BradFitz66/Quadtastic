@@ -1,13 +1,14 @@
 local Rectangle = {}
 
-Rectangle.new = function(_, x, y, w, h)
+Rectangle.new = function(_, x, y, w, h, ox, oy)
   local rectangle = {
     x = x,
     y = y,
     w = w,
     h = h,
+    ox = ox~=nil and ox or 0,
+    oy = oy~=nil and oy or 0,
   }
-
   setmetatable(rectangle, {
     __index = Rectangle,
   })

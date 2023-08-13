@@ -5,11 +5,13 @@ local Path = require(current_folder.. ".Path")
 local QuadExport = {}
 
 QuadExport.export = function(quads, exporter, filepath)
+  print("Exporting quads to " .. filepath)
   assert(quads and type(quads) == "table")
   assert(exporter and type(exporter) == "table", tostring(type(exporter)))
   assert(exporter.export and type(exporter.export) == "function")
   assert(exporter.ext and type(exporter.ext) == "string")
   assert(exporter.name and type(exporter.name) == "string")
+
 
   -- Use clone of quads table instead of the original one
   quads = common.clone(quads)

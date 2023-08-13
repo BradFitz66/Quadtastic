@@ -27,6 +27,7 @@ end
 
 Selection.get_selection = function(self) return table.keys(self.selection) end
 
+
 --[[
   Unused, was created for testing my theory of if creating a bounding box
   around the selection and then sorting the quads by the distance from 
