@@ -5,7 +5,10 @@ local Path = require(current_folder.. ".Path")
 local QuadExport = {}
 
 QuadExport.export = function(quads, exporter, filepath)
-  print("Exporting quads to " .. filepath)
+
+  --Save the filepath to the love2D save directory
+  local success, message = love.filesystem.write("filepath.txt", filepath)
+
   assert(quads and type(quads) == "table")
   assert(exporter and type(exporter) == "table", tostring(type(exporter)))
   assert(exporter.export and type(exporter.export) == "function")

@@ -827,7 +827,6 @@ Quadtastic.draw = function(app, state, gui_state)
                         if Button.draw(gui_state, nil, nil, nil, nil, nil,
                                 gui_state.style.quads.buttons.sort)
                         then
-                            print("!")
                             app.quadtastic.sort(state.selection:get_selection(),"row-major")
                         end
                         Tooltip.draw(gui_state, "Sort via row-major ordering")

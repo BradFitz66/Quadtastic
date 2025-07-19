@@ -139,6 +139,9 @@ local function show_quad(gui_state, state, quad, quadname)
                 local circle_y = quad.y + (quad.h * quad.oy)
                 
                 love.graphics.circle("fill", circle_x, circle_y, 2)
+                love.graphics.setColor(0, 0, 0)
+                love.graphics.circle("line", circle_x, circle_y, 2)
+                love.graphics.setColor(255, 255, 255)
             end
         else
             -- Use a simple line to outline the quad
@@ -325,7 +328,6 @@ local function wand_tool(app, gui_state, state)
                 quad = Grid.expand_rect(state.settings.grid, quad)
             end
             if quad then
-                print(quad.x, quad.y, quad.w, quad.h, quad.ox, quad.oy)
                 draw_dashed_line(quad, gui_state, state.display.zoom)
                 gui_state.mousestring = string.format("%dx%d", quad.w, quad.h)
                 if gui_state.input.mouse.buttons[1] and gui_state.input.mouse.buttons[1].presses >= 1 then
@@ -473,6 +475,7 @@ local function select_tool(app, gui_state, state, img_w, img_h)
                         if(v.ox and v.oy) then
                                 --ox is the relative x coordinate of the origin
                                 --oy is the relative y coordinate of the origin
+                            
                                 local ox = v.x + v.ox * v.w
                                 local oy = v.y + v.oy * v.h
                                 --Check if mouse is touching the origin (within 4 pixels)
@@ -538,6 +541,60 @@ local function select_tool(app, gui_state, state, img_w, img_h)
         -- selection box
     elseif gui_state.input.mouse.buttons[1] and gui_state.input.mouse.buttons[1].pressed and
         (not state.toolstate.mode or state.toolstate.mode == "selecting") then
+            
+        --Determine if mouse is over origin.
+
+        --We do this here in cases where the origin may be outside of the bounding box of the quad
+        --If we didn't do this, we would just end up deselecting the quad when attempting to move the origin and thus make it impossible to change
+        if(#state.selection:get_selection()==1) then
+            print("Determining if within range of origin")
+            for i, v in ipairs(state.selection:get_selection()) do
+                if libquadtastic.is_quad(v) then
+                if(v.ox and v.oy) then
+                        --ox is the relative x coordinate of the origin
+                        --oy is the relative y coordinate of the origin
+                    
+                        local ox = v.x + v.ox * v.w
+                        local oy = v.y + v.oy * v.h
+                        --Check if mouse is touching the origin (within 4 pixels)
+                        local mx, my = gui_state.input.mouse.x, gui_state.input.mouse.y
+                        mx, my = gui_state.transform:unproject(mx, my)
+                        if(math.abs(mx - ox) <= 4 and math.abs(my - oy) <= 4) then
+                            state.toolstate.mode = "moving_origin"
+                            state.toolstate.original_pos = {}
+                            for i, v in ipairs(state.selection:get_selection()) do
+                                if libquadtastic.is_quad(v) then
+                                    state.toolstate.original_pos[i] = {
+                                        x = v.ox* v.w,
+                                        y = v.oy* v.h,
+                                        ox = v.ox,
+                                        oy = v.oy
+                                    }
+                                end
+                            end
+                            break
+                        else
+                            state.toolstate.mode = "dragging"
+                            -- Save the locations of all quads
+                            for i, v in ipairs(state.selection:get_selection()) do
+                                if libquadtastic.is_quad(v) and state.toolstate.original_pos ~= nil then
+                                    if i < #state.toolstate.original_pos then
+                                        state.toolstate.original_pos[i] = {
+                                            x = v.x,
+                                            y = v.y
+                                        }
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        if state.toolstate.mode == "moving_origin" then
+            return
+        end
+
         -- If neither shift or ctrl is pressed, clear the selection
         if not fun.any(f, {"lshift", "rshift", "lctrl", "rctrl"}) then
             state.selection:clear_selection()

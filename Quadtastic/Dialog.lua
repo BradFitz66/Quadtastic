@@ -11,7 +11,6 @@ local Label = require(current_folder .. ".Label")
 local Text = require(current_folder .. ".Text")
 local Window = require(current_folder .. ".Window")
 local imgui = require(current_folder .. ".imgui")
-local licenses = require(current_folder .. ".res.licenses")
 local S = require(current_folder .. ".strings")
 local Path = require(current_folder .. ".Path")
 local Version = require(current_folder .. ".Version")
@@ -19,7 +18,7 @@ local common = require(current_folder .. ".common")
 local os = require(current_folder .. ".os")
 
 -- Shared library
-local lfs = require("lfs")
+--local lfs = require("lfs")
 
 local Dialog = {}
 

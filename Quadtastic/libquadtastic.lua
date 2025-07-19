@@ -66,7 +66,7 @@ end
 -- The defined colors are stored as a table, containing the R, G, B and A
 -- component of the color at index 1 through 4. Furthermore, each color is
 -- "callable", which makes it easier to change the alpha value on the fly.
-function libquadtastic.create_palette(table, image)
+function libquadtastic.create_palette(table, image,imagedata)
 
   local function create_palette(tab, imagedata)
 
@@ -92,9 +92,7 @@ function libquadtastic.create_palette(table, image)
 
     end
   end
-
   local imagedata
-
   if image:isCompressed() then
     error("Cannot currently handle compressed images")
   else

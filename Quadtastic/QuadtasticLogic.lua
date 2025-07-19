@@ -411,18 +411,19 @@ function QuadtasticLogic.transitions(interface)
             if not quads then quads = data.selection:get_selection() end
             if #quads > 1 then return end
             assert(#quads == #original_pos)
-
+            local function clamp(x, min, max) return math.max(min, math.min(x, max)) end
             for i = 1, #quads do
                 local quad = quads[i]
                 local pos = original_pos[i]
                 if libquadtastic.is_quad(quad) then
+                    local bounds ={
+                        x = quad.x,
+                        y = quad.y,
+                        w = quad.w,
+                        h = quad.h
+                    }
                     quad.ox = (pos.x + dx) / quad.w
                     quad.oy = (pos.y + dy) / quad.h
-
-
-                    -- Clamp the coordinates between 0 and 1
-                    quad.ox = math.max(0, math.min(1, quad.ox))
-                    quad.oy = math.max(0, math.min(1, quad.oy))
 
                     if snap_to_grid then
                         print("snap")

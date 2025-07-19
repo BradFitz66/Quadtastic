@@ -84,7 +84,6 @@ Selection.sorted_selection_rowmajor = function(self)
             table.insert(rows, row)
         end
     end
-    print("After loop")
     -- Sort rows by y value
     table.sort(rows, function(a, b) return a[1].y < b[1].y end)
     -- Sort each row by x value

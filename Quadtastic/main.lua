@@ -47,7 +47,7 @@ function love.load()
   -- Disable buffering of stdout
   io.stdout:setvbuf("no")
 
-  -- Direct output to both stdout and a log file
+  -- Direct output to both stdout and a lo  g file
   do
     -- Make sure that the save directory exists
     if not love.filesystem.exists("log.txt") then
@@ -58,13 +58,6 @@ function love.load()
     local logfile = love.filesystem.getSaveDirectory() .. "/" .. "log.txt"
     io.output(logfile)
     io.output():setvbuf("no")
-    local lua_print = print
-    print = function(...)
-      -- Print to stdout but also to the log file
-      lua_print(...)
-      io.write(...)
-      io.write('\n')
-    end
   end
 
   -- Initialize the exporters directory structure
@@ -87,9 +80,7 @@ function love.load()
   -- Initialize the state
   app = AppLogic(Quadtastic)
   app.quadtastic.new()
-
   love.graphics.setDefaultFilter("nearest", "nearest")
-
   local med_font = love.graphics.newFont("res/m5x7.ttf", 16)
   med_font:setFilter("nearest", "nearest")
   local smol_font = love.graphics.newFont("res/m3x6.ttf", 16)

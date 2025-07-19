@@ -48,16 +48,15 @@ function exporter.export(write, quads, info, ind)
     end
 
     if libquadtastic.is_quad(quads) then
-		print(quads.ox)
         write(
 			string.format(
-				"{\"x\":%d, \"y\": %d, \"w\": %d, \"h\": %d, \"ox\": %d, \"oy\": %d}", 
+				"{\"x\":%d, \"y\": %d, \"w\": %d, \"h\": %d, \"ox\": %.2f, \"oy\": %.2f}", 
 				quads.x, 
 				quads.y, 
 				quads.w, 
 				quads.h,
-				quads.ox~=nil and quads.ox or 0.5,
-				quads.oy~=nil and quads.oy or 0.5)
+				quads.ox,
+				quads.oy)
 			)
     elseif type(quads) == "table" then
         -- We need to distinguish between JSON arrays and objects. The function

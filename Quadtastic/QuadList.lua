@@ -73,20 +73,41 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
 
                     assert(raw_quads.default.w == raw_quads.default.h)
                     local quad_size = raw_quads.default.w
-
+                    local mouse_down = (gui_state.input ~= nil) and gui_state.input.mouse.buttons[1].pressed or false
                     local x, y = gui_state.layout.next_x + 1, gui_state.layout.next_y + 5
                     local w, h = quad_size, quad_size
 
                     local clicked, pressed, hovered = Button.draw_flat(gui_state, x, y, w, h, nil, quads)
+
+                    if(not mouse_down and state.last_action~=nil) then
+                        state.last_action = nil
+                    end
+
+                    --[[
+                    Since having to manually click to expand/collapse groups is annoying when you have a lot of groups,
+                    we allow the user to collapse/expand one group and then hold the mouse down to collapse/expand further
+                    groups by just hovering over them
+                    ]]
                     if clicked then
                         if state.collapsed_groups[element] then
                             state.collapsed_groups[element] = false
+                            state.last_action = "expand"
                         else
                             state.collapsed_groups[element] = true
+                            state.last_action = "collapse"
                         end
                     end
-                    input_consumed = clicked or pressed or hovered
+                    if(hovered and mouse_down) then
+                        if(not state.collapsed_groups[element] and state.last_action == "collapse") then
+                            state.collapsed_groups[element] = true
+                        elseif(state.collapsed_groups[element] and state.last_action == "expand") then
+                            state.collapsed_groups[element] = false
+                        end
+                    end
+                    
 
+
+                    input_consumed = clicked or pressed or hovered
                     Text.draw(gui_state, quad_size + 3, nil, gui_state.layout.max_w, nil,
                         string.format("%s", tostring(name)))
                 end
@@ -110,10 +131,13 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
             local w, h = gui_state.layout.adv_x, gui_state.layout.adv_y
             if not input_consumed and imgui.was_mouse_pressed(gui_state, x, y, w, h) then
                 clicked_element = element
+                print(clicked_element)
                 if gui_state.input.mouse.buttons[1].double_clicked then
                     double_clicked_element = element
                 end
             end
+
+
             hovered_element = not input_consumed and imgui.is_mouse_in_rect(gui_state, x, y, w, h) and element or
                                   hovered_element
 

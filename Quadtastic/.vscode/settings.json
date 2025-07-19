@@ -1,6 +1,6 @@
 {
     "Windows Love2d Path": "C:\\Program Files\\love-0.10.1-win32\\love.exe",
-    "pixelbyte.love2d.path": "C:\\Program Files\\love-0.10.1-win32\\love.exe",
+    "pixelbyte.love2d.path": "C:\\Program Files\\love-0.10.1-win32\\love32.exe",
     "Lua.workspace.checkThirdParty": false,
     "Lua.runtime.version": "LuaJIT",
     "Lua.runtime.special": {
