@@ -16,8 +16,8 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
             local row_height = 16
             -- check if this quad will be visible, and only draw it if it is visible.
             local visible = gui_state.layout.next_y + row_height >= state.quad_scrollpane_state.y and
-                                gui_state.layout.next_y < state.quad_scrollpane_state.y +
-                                (state.quad_scrollpane_state.h or 0)
+                gui_state.layout.next_y < state.quad_scrollpane_state.y +
+                (state.quad_scrollpane_state.h or 0)
 
             local input_consumed
             if visible then
@@ -33,34 +33,32 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
                 love.graphics.setColor(255, 255, 255)
                 -- Draw row background
                 love.graphics.draw( -- top
-                gui_state.style.stylesheet, background_quads.top, gui_state.layout.next_x, gui_state.layout.next_y, 0,
+                    gui_state.style.stylesheet, background_quads.top, gui_state.layout.next_x, gui_state.layout.next_y, 0,
                     gui_state.layout.max_w, 1)
                 love.graphics.draw( -- center
-                gui_state.style.stylesheet, background_quads.center, gui_state.layout.next_x,
+                    gui_state.style.stylesheet, background_quads.center, gui_state.layout.next_x,
                     gui_state.layout.next_y + 2, 0, gui_state.layout.max_w, 12)
                 love.graphics.draw( -- bottom
-                gui_state.style.stylesheet, background_quads.bottom, gui_state.layout.next_x,
+                    gui_state.style.stylesheet, background_quads.bottom, gui_state.layout.next_x,
                     gui_state.layout.next_y + 14, 0, gui_state.layout.max_w, 1)
 
                 if libquadtastic.is_quad(element) then
-
-                  Text.draw(
-                    gui_state, 
-                    2, 
-                    nil, 
-                    gui_state.layout.max_w, 
-                    nil, 
-                    string.format(
-                      "%s: x%d y%d  %dx%d ox%.2f oy%.2f",
-                      tostring(name), 
-                      element.x, 
-                      element.y, 
-                      element.w, 
-                      element.h,
-                      element.ox,
-                      element.oy)
+                    Text.draw(
+                        gui_state,
+                        2,
+                        nil,
+                        gui_state.layout.max_w,
+                        nil,
+                        string.format(
+                            "%s: x%d y%d  %dx%d ox%.2f oy%.2f",
+                            tostring(name),
+                            element.x,
+                            element.y,
+                            element.w,
+                            element.h,
+                            element.ox,
+                            element.oy)
                     )
-                        
                 else
                     local raw_quads, quads
                     if state.collapsed_groups[element] then
@@ -73,13 +71,14 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
 
                     assert(raw_quads.default.w == raw_quads.default.h)
                     local quad_size = raw_quads.default.w
-                    local mouse_down = (gui_state.input ~= nil) and gui_state.input.mouse.buttons[1].pressed or false
+                    local mouse_down = (gui_state.input ~= nil and gui_state.input.mouse ~= nil) and
+                    gui_state.input.mouse.buttons[1].pressed or false
                     local x, y = gui_state.layout.next_x + 1, gui_state.layout.next_y + 5
                     local w, h = quad_size, quad_size
 
                     local clicked, pressed, hovered = Button.draw_flat(gui_state, x, y, w, h, nil, quads)
 
-                    if(not mouse_down and state.last_action~=nil) then
+                    if (not mouse_down and state.last_action ~= nil) then
                         state.last_action = nil
                     end
 
@@ -97,21 +96,20 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
                             state.last_action = "collapse"
                         end
                     end
-                    if(hovered and mouse_down) then
-                        if(not state.collapsed_groups[element] and state.last_action == "collapse") then
+                    if (hovered and mouse_down) then
+                        if (not state.collapsed_groups[element] and state.last_action == "collapse") then
                             state.collapsed_groups[element] = true
-                        elseif(state.collapsed_groups[element] and state.last_action == "expand") then
+                        elseif (state.collapsed_groups[element] and state.last_action == "expand") then
                             state.collapsed_groups[element] = false
                         end
                     end
-                    
+
 
 
                     input_consumed = clicked or pressed or hovered
                     Text.draw(gui_state, quad_size + 3, nil, gui_state.layout.max_w, nil,
                         string.format("%s", tostring(name)))
                 end
-
             end
 
             gui_state.layout.adv_x = gui_state.layout.max_w
@@ -139,7 +137,7 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
 
 
             hovered_element = not input_consumed and imgui.is_mouse_in_rect(gui_state, x, y, w, h) and element or
-                                  hovered_element
+                hovered_element
 
             Layout.next(gui_state, "|")
             -- If we are drawing a group, we now need to recursively draw its
@@ -175,7 +173,7 @@ QuadList.draw = function(gui_state, state, x, y, w, h, last_hovered)
         do
             state.quad_scrollpane_state = Scrollpane.start(gui_state, nil, nil, nil, nil, state.quad_scrollpane_state)
             do
-                Layout.start(gui_state, nil, nil, 180, nil, {
+                Layout.start(gui_state, nil, nil, nil, nil, {
                     noscissor = true
                 })
                 clicked, hovered, double_clicked = draw_elements(gui_state, state, state.quads, last_hovered,
@@ -186,7 +184,7 @@ QuadList.draw = function(gui_state, state, x, y, w, h, last_hovered)
             -- possible
             state.quad_scrollpane_state.min_x = 0
             state.quad_scrollpane_state.min_y = 0
-            state.quad_scrollpane_state.max_x = gui_state.layout.adv_x+20
+            state.quad_scrollpane_state.max_x = gui_state.layout.adv_x
             state.quad_scrollpane_state.max_y = math.max(gui_state.layout.adv_y, gui_state.layout.max_h)
         end
         Scrollpane.finish(gui_state, state.quad_scrollpane_state)

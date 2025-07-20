@@ -8,5 +8,6 @@
     },
     "Lua.workspace.library": [
         "${3rd}/love2d/library"
-    ]
+    ],
+    "pixelbyte.love2d.revealStatus": true
 }

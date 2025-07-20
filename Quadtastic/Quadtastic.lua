@@ -11,6 +11,7 @@ local Window = require(current_folder .. ".Window")
 local Scrollpane = require(current_folder .. ".Scrollpane")
 local Tooltip = require(current_folder .. ".Tooltip")
 local ImageEditor = require(current_folder .. ".ImageEditor")
+local AnimationEditor = require(current_folder .. ".AnimationEditor")
 local QuadList = require(current_folder .. ".QuadList")
 local libquadtastic = require(current_folder .. ".libquadtastic")
 local Checkbox = require(current_folder .. ".Checkbox")
@@ -416,7 +417,7 @@ Quadtastic.draw = function(app, state, gui_state)
         Layout.next(gui_state, "|")
 
         do
-            Layout.start(gui_state) -- Image editor
+            Layout.start(gui_state)
             -- Toolbar
             do
                 Layout.start(gui_state)
@@ -526,14 +527,14 @@ Quadtastic.draw = function(app, state, gui_state)
             end
             Layout.finish(gui_state, "|")
 
-            Layout.next(gui_state, "-")
-
+            Layout.next(gui_state, "-") -- Image editor
             do
-                Layout.start(gui_state, nil, nil, gui_state.layout.max_w - 160, nil)
+                --Image editor
+                Layout.start(gui_state, nil, nil, gui_state.layout.max_w - 400, nil)
                 do
-                    Frame.start(gui_state, nil, nil, nil, gui_state.layout.max_h - 13)
+                    Frame.start(gui_state, nil, nil, nil, gui_state.layout.max_h - 128)
                     if state.image then
-                        ImageEditor.draw(app, gui_state, state)
+                        ImageEditor.draw(app, gui_state, state, nil, nil, nil, nil)
                     else
                         -- Put a label in the center of the frame
                         imgui.push_style(gui_state, "font", gui_state.style.small_font)
@@ -550,11 +551,34 @@ Quadtastic.draw = function(app, state, gui_state)
                     end
                 end
                 Frame.finish(gui_state)
-
-                Layout.next(gui_state, "|", 1)
-
+                Layout.next(gui_state, "|")
+                Frame.start(gui_state, nil, nil, 96, gui_state.layout.max_h - 32)
+                -- Animation editor
+                Frame.finish(gui_state)
+                Layout.next(gui_state, "-") -- AnimationEditor start
                 do
-                    Layout.start(gui_state) -- Zoom buttons
+                    Frame.start(gui_state, nil, nil, nil, gui_state.layout.max_h - 64)
+                    if state.image then
+                        AnimationEditor.draw(gui_state, state, nil, nil, nil, nil)
+                    else
+                        -- Put a label in the center of the frame
+                        imgui.push_style(gui_state, "font", gui_state.style.small_font)
+                        Label.draw(
+                            gui_state,
+                            nil,
+                            nil,
+                            gui_state.layout.max_w,
+                            gui_state.layout.max_h,
+                            "No image loaded :(",
+                            { alignment_h = ":", alignment_v = "-" }
+                        )
+                        imgui.pop_style(gui_state, "font")
+                    end
+                    Frame.finish(gui_state)
+                end
+                Layout.next(gui_state, "|", 1) -- Zoom button start
+                do
+                    Layout.start(gui_state)    -- Zoom buttons
                     local disable_zoom_buttons = not state.image
                     do
                         local pressed =
@@ -633,24 +657,26 @@ Quadtastic.draw = function(app, state, gui_state)
                     end
                     imgui.pop_style(gui_state, "font")
                 end
-                Layout.finish(gui_state, "-") -- Zoom buttons
+                Layout.finish(gui_state, "|") -- Zoom buttons
             end
             Layout.finish(gui_state, "|")
 
-            Layout.next(gui_state, "-")
-
-            -- Quad list and buttons
+            Layout.next(gui_state, "-") -- Start quad list
             do
                 Layout.start(gui_state)
                 -- Quad list
                 do
-                    Layout.start(gui_state)
+                    Layout.start(gui_state, nil, nil, nil, nil,
+                        {
+                            noscissor = true,
+                        }
+                    )
                     do
-                        Layout.start(gui_state, nil, nil, gui_state.layout.max_w - 21)
+                        Layout.start(gui_state, nil, nil, nil)
                         -- Draw the list of quads
---gui_state, state, x, y, w, h, last_hovered                        
-                        local clicked, hovered, double_clicked =
-                            QuadList.draw(gui_state, state, nil, nil, nil, gui_state.layout.max_h - 33, state.hovered)
+                        --gui_state, state, x, y, w, h, last_hovered
+                        local clicked, hovered, double_clicked = QuadList.draw(gui_state, state, nil, nil, nil,
+                            gui_state.layout.max_h - 33, state.hovered)
                         if clicked then
                             local new_quads = { clicked }
                             -- If shift was pressed, select all quads between the clicked one and
@@ -809,7 +835,7 @@ Quadtastic.draw = function(app, state, gui_state)
                         Tooltip.draw(gui_state, S.tooltips.rename)
                         Layout.next(gui_state, "|")
                         if Button.draw(gui_state, nil, nil, nil, nil, nil,
-                            gui_state.style.quads.buttons.delete)
+                                gui_state.style.quads.buttons.delete)
                         then
                             app.quadtastic.remove(state.selection:get_selection())
                         end
@@ -819,15 +845,15 @@ Quadtastic.draw = function(app, state, gui_state)
                         if Button.draw(gui_state, nil, nil, nil, nil, nil,
                                 gui_state.style.quads.buttons.sort)
                         then
-                            app.quadtastic.sort(state.selection:get_selection(),"topleft")
-                        end                        
+                            app.quadtastic.sort(state.selection:get_selection(), "topleft")
+                        end
                         Tooltip.draw(gui_state, S.tooltips.sort)
                         Layout.next(gui_state, "|")
 
                         if Button.draw(gui_state, nil, nil, nil, nil, nil,
                                 gui_state.style.quads.buttons.sort)
                         then
-                            app.quadtastic.sort(state.selection:get_selection(),"row-major")
+                            app.quadtastic.sort(state.selection:get_selection(), "row-major")
                         end
                         Tooltip.draw(gui_state, "Sort via row-major ordering")
                         Layout.next(gui_state, "|")
