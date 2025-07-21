@@ -12,6 +12,7 @@ local Scrollpane = require(current_folder .. ".Scrollpane")
 local Tooltip = require(current_folder .. ".Tooltip")
 local ImageEditor = require(current_folder .. ".ImageEditor")
 local AnimationEditor = require(current_folder .. ".AnimationEditor")
+local AnimationList = require(current_folder .. ".AnimationList")
 local QuadList = require(current_folder .. ".QuadList")
 local libquadtastic = require(current_folder .. ".libquadtastic")
 local Checkbox = require(current_folder .. ".Checkbox")
@@ -528,11 +529,8 @@ Quadtastic.draw = function(app, state, gui_state)
             Layout.finish(gui_state, "|")
 
             Layout.next(gui_state, "-") -- Image editor
-            do
-                --Image editor
-                Layout.start(gui_state, nil, nil, gui_state.layout.max_w - 400, nil)
-                do
-                    Frame.start(gui_state, nil, nil, nil, gui_state.layout.max_h - 128)
+            do Layout.start(gui_state, nil, nil, gui_state.layout.max_w - 160, nil)
+                do Frame.start(gui_state, nil, nil, nil, gui_state.layout.max_h-164)
                     if state.image then
                         ImageEditor.draw(app, gui_state, state, nil, nil, nil, nil)
                     else
@@ -549,36 +547,9 @@ Quadtastic.draw = function(app, state, gui_state)
                         )
                         imgui.pop_style(gui_state, "font")
                     end
-                end
-                Frame.finish(gui_state)
-                Layout.next(gui_state, "|")
-                Frame.start(gui_state, nil, nil, 96, gui_state.layout.max_h - 32)
-                -- Animation editor
-                Frame.finish(gui_state)
-                Layout.next(gui_state, "-") -- AnimationEditor start
-                do
-                    Frame.start(gui_state, nil, nil, nil, gui_state.layout.max_h - 64)
-                    if state.image then
-                        AnimationEditor.draw(gui_state, state, nil, nil, nil, nil)
-                    else
-                        -- Put a label in the center of the frame
-                        imgui.push_style(gui_state, "font", gui_state.style.small_font)
-                        Label.draw(
-                            gui_state,
-                            nil,
-                            nil,
-                            gui_state.layout.max_w,
-                            gui_state.layout.max_h,
-                            "No image loaded :(",
-                            { alignment_h = ":", alignment_v = "-" }
-                        )
-                        imgui.pop_style(gui_state, "font")
-                    end
-                    Frame.finish(gui_state)
-                end
+                end Frame.finish(gui_state)
                 Layout.next(gui_state, "|", 1) -- Zoom button start
-                do
-                    Layout.start(gui_state)    -- Zoom buttons
+                do Layout.start(gui_state)    -- Zoom buttons
                     local disable_zoom_buttons = not state.image
                     do
                         local pressed =
@@ -656,228 +627,249 @@ Quadtastic.draw = function(app, state, gui_state)
                         Layout.next(gui_state, "-")
                     end
                     imgui.pop_style(gui_state, "font")
-                end
-                Layout.finish(gui_state, "|") -- Zoom buttons
-            end
-            Layout.finish(gui_state, "|")
+                end Layout.finish(gui_state, "-") -- Zoom buttons
 
-            Layout.next(gui_state, "-") -- Start quad list
-            do
-                Layout.start(gui_state)
-                -- Quad list
-                do
-                    Layout.start(gui_state, nil, nil, nil, nil,
-                        {
-                            noscissor = true,
-                        }
+                Layout.next(gui_state, "|")
+                do Layout.start(gui_state ) -- Animation list
+                    do Frame.start(gui_state, nil, nil, 128,96)
+                        do Layout.start(gui_state)
+                            local clicked, hovered, double_clicked = AnimationList.draw(gui_state, state, nil, nil, nil,
+                                nil, state.hovered)
+                            Layout.finish(gui_state, "-")
+                        end
+                    end Frame.finish(gui_state)
+                    Layout.next(gui_state, "-")
+                    do Frame.start(gui_state, nil, nil, gui_state.layout.max_w-96, 96)
+                        if state.image then
+                            AnimationEditor.draw(gui_state, state, nil, nil, nil, nil)
+                        else
+                            imgui.push_style(gui_state, "font", gui_state.style.small_font)
+                            Label.draw(
+                                gui_state,
+                                nil,
+                                nil,
+                                nil,
+                                nil,
+                                "No image :(",
+                                { alignment_h = ":", alignment_v = "-" }
+                            )
+                            imgui.pop_style(gui_state, "font")
+                        end
+                    end Frame.finish(gui_state)
+                    Layout.next(gui_state, "-")
+                    do Frame.start(gui_state, nil, nil, 96, 96)
+                    end Frame.finish(gui_state)
+                    Layout.next(gui_state, "|")
+                    do Label.draw(
+                        gui_state,
+                        nil,
+                        nil,
+                        nil,
+                        nil,
+                        "Animation Preview",
+                        { alignment_h = ":", alignment_v = "-" }
                     )
-                    do
-                        Layout.start(gui_state, nil, nil, nil)
-                        -- Draw the list of quads
-                        --gui_state, state, x, y, w, h, last_hovered
-                        local clicked, hovered, double_clicked = QuadList.draw(gui_state, state, nil, nil, nil,
-                            gui_state.layout.max_h - 33, state.hovered)
-                        if clicked then
-                            local new_quads = { clicked }
-                            -- If shift was pressed, select all quads between the clicked one and
-                            -- the last quad that was clicked
-                            if
-                                gui_state.input and
-                                (imgui.is_key_pressed(gui_state, "lshift") or
-                                    imgui.is_key_pressed(gui_state, "rshift")) and
-                                state.previous_clicked
-                            then
-                                -- Make sure that the new quad and the last quads are child of the
-                                -- same parent
-                                local previous_keys = { table.find_key(state.quads, state.previous_clicked) }
-                                local new_keys = { table.find_key(state.quads, clicked) }
-                                -- Remove the last keys since they will likely differ
-                                local previous_key = table.remove(previous_keys)
-                                local new_key = table.remove(new_keys)
-                                if table.shallow_equals(previous_keys, new_keys) then
-                                    if previous_key == new_key then
-                                        -- In this case the user clicked the same quad twice after
-                                        -- pressing shift. We don't need to take any extra steps.
-                                        assert(state.previous_clicked == clicked)
-                                    else
-                                        -- We don't know the exact order in which quads appear. So we
-                                        -- iterate through the quads of the shared parent. Once we
-                                        -- encounter either the new or the previous quad, we start
-                                        -- adding all intermediate quads to a list that will then be
-                                        -- selected.
-                                        local parent = table.get(state.quads, unpack(new_keys))
-                                        local found_previous = false
-                                        local found_new = false
-                                        -- Clear the list of new quads to make the accumulation process
-                                        -- a bit easier
-                                        new_quads = {}
-                                        for k, v in pairs(parent) do
-                                            if v == clicked then
-                                                found_new = true
-                                            end
-                                            if v == state.previous_clicked then
-                                                found_previous = true
-                                            end
-                                            if found_new or found_previous and k ~= "_META" then
-                                                table.insert(new_quads, v)
-                                            end
-                                            if found_new and found_previous then
-                                                break
-                                            end
-                                        end
-                                    end
-                                end
-                            else
-                                state.previous_clicked = clicked
-                            end
-
-                            if
-                                gui_state.input and
-                                (imgui.is_key_pressed(gui_state, "lctrl") or
-                                    imgui.is_key_pressed(gui_state, "rctrl"))
-                            then
-                                if #new_quads == 1 and state.selection:is_selected(clicked) then
-                                    state.selection:deselect(new_quads)
-                                else
-                                    state.selection:select(new_quads)
-                                end
-                            else
-                                state.selection:set_selection(new_quads)
-                            end
-                        end -- if clicked
-
-                        -- Move viewport so that clicked quad is visible
-                        if clicked and libquadtastic.is_quad(clicked) then
-                            local bounds = {}
-                            -- We need to transform the position and dimension of the clicked
-                            -- quad, since the scrollpane doesn't handle the zoom.
-                            bounds.x = clicked.x * state.display.zoom
-                            bounds.y = clicked.y * state.display.zoom
-                            bounds.w = clicked.w * state.display.zoom
-                            bounds.h = clicked.h * state.display.zoom
-
-                            -- Move the image editor's viewport to the focused quad
-                            Scrollpane.set_focus(state.scrollpane_state, bounds)
-                        end
-
-                        if double_clicked then
-                            -- Set the selection to the double-clicked element
-                            state.selection:set_selection({ double_clicked })
-                            -- Open a rename dialog for the clicked element
-                            app.quadtastic.rename(state.selection:get_selection())
-                        end
-
-                        state.hovered = hovered
-
-                        Layout.next(gui_state, "|")
-
-                        if
+                    end
+                    Layout.next(gui_state, "-")
+                    print(gui_state.style.quads.menu.pause)
+                    do Layout.start(gui_state,128)
+                        do 
+                            imgui.push_style(gui_state, "font", gui_state.style.small_font)
+                            local pressed =
                             Button.draw(
                                 gui_state,
                                 nil,
                                 nil,
-                                gui_state.layout.max_w,
-                                nil,
-                                S.buttons.export,
-                                nil,
-                                {
-                                    alignment_h = ":",
-                                    disabled = state.prev_exporter == nil
-                                }
+                                16,
+                                16,
+                                "",
+                                state.playing_anim and gui_state.style.quads.menu.pause or gui_state.style.quads.rowbackground.collapsed.hovered,
+                                { alignment_h = ">", alignment_v = ":", pressed = state.playing_anim, center_icon = true, disabled = state.image==nil }
                             )
-                        then
-                            app.quadtastic.repeat_export(export_toast_callback)
-                        end
-
-                        Layout.next(gui_state, "|", 2)
-
-                        do
-                            Layout.start(gui_state)
-                            state.turbo_workflow = Checkbox.draw(gui_state, nil, nil, nil, 12, state.turbo_workflow)
-
-                            Layout.next(gui_state, "-")
-
-                            if state.turbo_workflow then
-                                local anim_set = gui_state.style.turboworkflow_activated
-                                local frame = 1 + math.fmod(gui_state.second / anim_set.duration, #anim_set.frames)
-                                frame = math.modf(frame)
-                                love.graphics.draw(
-                                    anim_set.sheet,
-                                    anim_set.frames[frame],
-                                    gui_state.layout.next_x,
-                                    gui_state.layout.next_y - 2
-                                )
-                            else
-                                love.graphics.draw(
-                                    gui_state.style.turboworkflow_deactivated,
-                                    gui_state.layout.next_x,
-                                    gui_state.layout.next_y - 2
-                                )
+                            imgui.pop_style(gui_state, "font")
+                            if pressed then
+                                state.playing_anim = not state.playing_anim
                             end
-                            Tooltip.draw(gui_state, S.tooltips.turbo_workflow, nil, nil, 128, 12)
-                            -- imgui.push_style(gui_state, "font", gui_state.style.small_font)
-                            -- Label.draw(gui_state, nil, nil, nil, 12, "Turbo-Workflow")
-                            -- imgui.pop_style(gui_state, "font")
+                        end 
+                    end Layout.finish(gui_state, "-")
+                end Layout.finish(gui_state, "-")            
+
+            end Layout.finish(gui_state, "|")
+
+
+            Layout.next(gui_state, "-") -- Start quad list
+            do Layout.start(gui_state)
+                -- Quad list
+                do Layout.start(gui_state)
+                do Layout.start(gui_state, nil, nil, gui_state.layout.max_w - 21)
+                    -- Draw the list of quads
+                    local clicked, hovered, double_clicked =
+                    QuadList.draw(gui_state, state, nil, nil, nil, gui_state.layout.max_h - 33,
+                                    state.hovered)
+                    if clicked then
+                    local new_quads = {clicked}
+                    -- If shift was pressed, select all quads between the clicked one and
+                    -- the last quad that was clicked
+                    if gui_state.input and
+                        (imgui.is_key_pressed(gui_state, "lshift") or
+                        imgui.is_key_pressed(gui_state, "rshift")) and
+                        state.previous_clicked
+                    then
+                        -- Make sure that the new quad and the last quads are child of the
+                        -- same parent
+                        local previous_keys = {table.find_key(state.quads, state.previous_clicked)}
+                        local new_keys = {table.find_key(state.quads, clicked)}
+                        -- Remove the last keys since they will likely differ
+                        local previous_key = table.remove(previous_keys)
+                        local new_key = table.remove(new_keys)
+                        if table.shallow_equals(previous_keys, new_keys) then
+                        if previous_key == new_key then
+                            assert(state.previous_clicked == clicked)
+                            -- In this case the user clicked the same quad twice after
+                            -- pressing shift. We don't need to take any extra steps.
+                        else
+                            -- We don't know the exact order in which quads appear. So we
+                            -- iterate through the quads of the shared parent. Once we
+                            -- encounter either the new or the previous quad, we start
+                            -- adding all intermediate quads to a list that will then be
+                            -- selected.
+                            local parent = table.get(state.quads, unpack(new_keys))
+                            local found_previous = false
+                            local found_new = false
+                            -- Clear the list of new quads to make the accumulation process
+                            -- a bit easier
+                            new_quads = {}
+                            for k,v in pairs(parent) do
+                            if v == clicked then
+                                found_new = true
+                            end
+                            if v == state.previous_clicked then
+                                found_previous = true
+                            end
+                            if found_new or found_previous and k ~= "_META" then
+                                table.insert(new_quads, v)
+                            end
+                            if found_new and found_previous then break end
+                            end
                         end
-                        Layout.finish(gui_state, "-")
+                        end
+                    else
+                        state.previous_clicked = clicked
                     end
-                    Layout.finish(gui_state, "|")
+
+                    if gui_state.input and
+                        (imgui.is_key_pressed(gui_state, "lctrl") or
+                        imgui.is_key_pressed(gui_state, "rctrl"))
+                    then
+                        if #new_quads == 1 and state.selection:is_selected(clicked) then
+                        state.selection:deselect(new_quads)
+                        else
+                        state.selection:select(new_quads)
+                        end
+                    else
+                        state.selection:set_selection(new_quads)
+                    end
+                    end -- if clicked
+
+                    -- Move viewport so that clicked quad is visible
+                    if clicked and libquadtastic.is_quad(clicked) then
+                    local bounds = {}
+                    -- We need to transform the position and dimension of the clicked
+                    -- quad, since the scrollpane doesn't handle the zoom.
+                    bounds.x = clicked.x * state.display.zoom
+                    bounds.y = clicked.y * state.display.zoom
+                    bounds.w = clicked.w * state.display.zoom
+                    bounds.h = clicked.h * state.display.zoom
+
+                    -- Move the image editor's viewport to the focused quad
+                    Scrollpane.set_focus(state.scrollpane_state, bounds)
+                    end
+
+                    if double_clicked then
+                    -- Set the selection to the double-clicked element
+                    state.selection:set_selection({double_clicked})
+                    -- Open a rename dialog for the clicked element
+                    app.quadtastic.rename(state.selection:get_selection())
+                    end
+
+                    state.hovered = hovered
+
+                    Layout.next(gui_state, "|")
+
+                    if Button.draw(gui_state, nil, nil, gui_state.layout.max_w, nil,
+                                S.buttons.export, nil,
+                                {alignment_h = ":",
+                                    disabled = state.prev_exporter == nil})
+                    then
+                    app.quadtastic.repeat_export(export_toast_callback)
+                    end
+
+                    Layout.next(gui_state, "|", 2)
+
+                    do Layout.start(gui_state)
+                    state.turbo_workflow = Checkbox.draw(gui_state, nil, nil, nil, 12, state.turbo_workflow)
+
                     Layout.next(gui_state, "-")
 
-                    -- Draw button column
-                    do
-                        Layout.start(gui_state)
-                        if Button.draw(gui_state, nil, nil, nil, nil, nil,
-                                gui_state.style.quads.buttons.rename)
-                        then
-                            app.quadtastic.rename(state.selection:get_selection())
-                        end
-                        Tooltip.draw(gui_state, S.tooltips.rename)
-                        Layout.next(gui_state, "|")
-                        if Button.draw(gui_state, nil, nil, nil, nil, nil,
-                                gui_state.style.quads.buttons.delete)
-                        then
-                            app.quadtastic.remove(state.selection:get_selection())
-                        end
-                        Tooltip.draw(gui_state, S.tooltips.delete)
-                        Layout.next(gui_state, "|")
-
-                        if Button.draw(gui_state, nil, nil, nil, nil, nil,
-                                gui_state.style.quads.buttons.sort)
-                        then
-                            app.quadtastic.sort(state.selection:get_selection(), "topleft")
-                        end
-                        Tooltip.draw(gui_state, S.tooltips.sort)
-                        Layout.next(gui_state, "|")
-
-                        if Button.draw(gui_state, nil, nil, nil, nil, nil,
-                                gui_state.style.quads.buttons.sort)
-                        then
-                            app.quadtastic.sort(state.selection:get_selection(), "row-major")
-                        end
-                        Tooltip.draw(gui_state, "Sort via row-major ordering")
-                        Layout.next(gui_state, "|")
-
-                        if Button.draw(gui_state, nil, nil, nil, nil, nil,
-                                gui_state.style.quads.buttons.group)
-                        then
-                            app.quadtastic.group(state.selection:get_selection())
-                        end
-                        Tooltip.draw(gui_state, S.tooltips.group)
-                        Layout.next(gui_state, "|")
-
-                        if Button.draw(gui_state, nil, nil, nil, nil, nil,
-                                gui_state.style.quads.buttons.ungroup)
-                        then
-                            app.quadtastic.ungroup(state.selection:get_selection())
-                        end
-                        Tooltip.draw(gui_state, S.tooltips.ungroup)
+                    if state.turbo_workflow then
+                        local anim_set = gui_state.style.turboworkflow_activated
+                        local frame = 1 + math.fmod(gui_state.second / anim_set.duration, #anim_set.frames)
+                        frame = math.modf(frame)
+                        love.graphics.draw(anim_set.sheet, anim_set.frames[frame],
+                                        gui_state.layout.next_x, gui_state.layout.next_y - 2)
+                    else
+                        love.graphics.draw(gui_state.style.turboworkflow_deactivated,
+                                        gui_state.layout.next_x, gui_state.layout.next_y - 2)
                     end
-                    Layout.finish(gui_state, "|")
-                end
-                Layout.finish(gui_state, "-")
-            end
-            Layout.finish(gui_state, "|")
+                    Tooltip.draw(gui_state, S.tooltips.turbo_workflow,
+                                nil, nil, 128, 12)
+                    -- imgui.push_style(gui_state, "font", gui_state.style.small_font)
+                    -- Label.draw(gui_state, nil, nil, nil, 12, "Turbo-Workflow")
+                    -- imgui.pop_style(gui_state, "font")
+                    end Layout.finish(gui_state, "-")
+
+                end Layout.finish(gui_state, "|")
+                Layout.next(gui_state, "-")
+
+                -- Draw button column
+                do Layout.start(gui_state)
+                    if Button.draw(gui_state, nil, nil, nil, nil, nil,
+                                gui_state.style.quads.buttons.rename)
+                    then
+                    app.quadtastic.rename(state.selection:get_selection())
+                    end
+                    Tooltip.draw(gui_state, S.tooltips.rename)
+                    Layout.next(gui_state, "|")
+                    if Button.draw(gui_state, nil, nil, nil, nil, nil,
+                                gui_state.style.quads.buttons.delete)
+                    then
+                    app.quadtastic.remove(state.selection:get_selection())
+                    end
+                    Tooltip.draw(gui_state, S.tooltips.delete)
+                    Layout.next(gui_state, "|")
+                    if Button.draw(gui_state, nil, nil, nil, nil, nil,
+                                gui_state.style.quads.buttons.sort)
+                    then
+                    app.quadtastic.sort(state.selection:get_selection())
+                    end
+                    Tooltip.draw(gui_state, S.tooltips.sort)
+                    Layout.next(gui_state, "|")
+                    if Button.draw(gui_state, nil, nil, nil, nil, nil,
+                                gui_state.style.quads.buttons.group)
+                    then
+                    app.quadtastic.group(state.selection:get_selection())
+                    end
+                    Tooltip.draw(gui_state, S.tooltips.group)
+                    Layout.next(gui_state, "|")
+                    if Button.draw(gui_state, nil, nil, nil, nil, nil,
+                                gui_state.style.quads.buttons.ungroup)
+                    then
+                    app.quadtastic.ungroup(state.selection:get_selection())
+                    end
+                    Tooltip.draw(gui_state, S.tooltips.ungroup)
+                end Layout.finish(gui_state, "|")
+                end Layout.finish(gui_state, "-")
+            end Layout.finish(gui_state, "|")
         end
         Layout.finish(gui_state, "-") -- Image editor and quad list
 

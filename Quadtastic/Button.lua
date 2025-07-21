@@ -36,7 +36,7 @@ Button.draw = function(state, x, y, w, h, label, iconquad, options)
   x = x or state.layout.next_x
   y = y or state.layout.next_y
 
-  local _, _, iconwidth, iconheight = unpack(iconquad and {iconquad:getViewport()} or {})
+  local _, _, iconwidth, iconheight = unpack(iconquad and { iconquad:getViewport() } or {})
   local labelwidth, labelheight = label and Text.min_width(state, label) or nil, label and 16 or nil
 
   local margin_x = 4
@@ -72,12 +72,13 @@ Button.draw = function(state, x, y, w, h, label, iconquad, options)
   if iconquad then
     love.graphics.setColor(255, 255, 255, 255)
     local margin_y = (h - iconheight) / 2
-    love.graphics.draw(state.style.stylesheet, iconquad, x + 3, y + margin_y)
+    local x_pos = (options and options.center_icon) and (x + w / 2 - iconwidth / 2) or x + 3
+    love.graphics.draw(state.style.stylesheet, iconquad, x_pos, y + margin_y)
     next_x = next_x + iconwidth
   end
   if label then
     local margin_y = (h - labelheight) / 2
-    Text.draw(state, next_x + margin_x, y + margin_y, w - 2*margin_x, h - 2*margin_y, label, options)
+    Text.draw(state, next_x + margin_x, y + margin_y, w - 2 * margin_x, h - 2 * margin_y, label, options)
   end
 
   state.layout.adv_x = w
@@ -108,11 +109,11 @@ Button.draw_flat = function(state, x, y, w, h, label, icons, options)
   y = y or state.layout.next_y
 
   assert(not icons or icons.default and icons.hovered and icons.pressed)
-  local _, _, iconwidth, iconheight = unpack(icons and {icons.default:getViewport()} or {})
+  local _, _, iconwidth, iconheight = unpack(icons and { icons.default:getViewport() } or {})
   local labelwidth, labelheight = label and Text.min_width(state, label) or nil, label and 16 or nil
 
   if not w then
-    w = (label and labelwidth+2 or 0) +
+    w = (label and labelwidth + 2 or 0) +
         (icons and iconwidth or 0)
   end
   if not h then
@@ -129,17 +130,17 @@ Button.draw_flat = function(state, x, y, w, h, label, icons, options)
   pressed = pressed or options and options.pressed
   if pressed then
     local pressed_color = options and options.bg_color_pressed or
-                          state.style.palette.shades.darkest(90)
+        state.style.palette.shades.darkest(90)
     love.graphics.setColor(pressed_color)
   elseif hovered then
     local hovered_color = options and options.bg_color_hovered or
-                          state.style.palette.shades.brightest
+        state.style.palette.shades.brightest
     love.graphics.setColor(hovered_color)
   elseif options and options.bg_color_default then
     love.graphics.setColor(options.bg_color_default)
   end
   if label and (pressed or hovered) and not (options and options.disabled)
-     or options and options.bg_color_default
+      or options and options.bg_color_default
   then
     love.graphics.rectangle("fill", x, y, w, h)
   end
@@ -152,7 +153,6 @@ Button.draw_flat = function(state, x, y, w, h, label, icons, options)
   end
   local next_x = x
   if icons then
-
     local quad
     if pressed then
       quad = icons.pressed

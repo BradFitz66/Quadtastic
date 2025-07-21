@@ -78,6 +78,7 @@ return {
     t = {x = 98, y = 32, w = 1, h = 2},
     tl = {x = 96, y = 32, w = 2, h = 2},
     tr = {x = 110, y = 32, w = 2, h = 2},
+	pause = {x = 25, y = 41, w = 5, h = 5}
   },
   menu_checkbox = {
     checked = {x = 73, y = 81, w = 7, h = 7},

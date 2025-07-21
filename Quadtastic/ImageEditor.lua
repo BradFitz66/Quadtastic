@@ -439,8 +439,8 @@ local function select_tool(app, gui_state, state, img_w, img_h)
                 state.toolstate.original_quad = {}
                 for i, v in ipairs(state.selection:get_selection()) do
                     if libquadtastic.is_quad(v) then
-        local mx, my = gui_state.input.mouse.x, gui_state.input.mouse.y
-        mx, my = gui_state.transform:unproject(mx, my)
+                        local mx, my = gui_state.input.mouse.x, gui_state.input.mouse.y
+                        mx, my = gui_state.transform:unproject(mx, my)
 
                         state.toolstate.original_quad[i] = {
                             x = v.x,

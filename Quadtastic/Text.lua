@@ -16,12 +16,12 @@ end
 -- Returns a table with the original text if width is 0 or nil.
 function Text.break_at(state, text, width)
   text = utf8_encode(text)
-  if not width or width <= 0 then return {text} end
+  if not width or width <= 0 then return { text } end
 
   local lines = {}
   local line = {}
   local line_length = 0
-  local separators = {" ", "-", "/", "\\", "."}
+  local separators = { " ", "-", "/", "\\", "." }
   local function complete_line(separator)
     local new_line = table.concat(line, separator)
     if separator ~= " " then new_line = new_line .. separator end
@@ -46,7 +46,7 @@ function Text.break_at(state, text, width)
         end
       elseif line_length + wordlength > width then
         complete_line(separator)
-        line, line_length = {word}, wordlength
+        line, line_length = { word }, wordlength
       else
         table.insert(line, word)
         line_length = line_length + wordlength + separator_width
@@ -66,7 +66,7 @@ function Text.break_at(state, text, width)
 end
 
 Text.draw = function(state, x, y, w, h, text, options)
-  text= utf8_encode(text)
+  text = utf8_encode(text)
   x = x or state.layout.next_x
   y = y or state.layout.next_y
 
@@ -78,18 +78,18 @@ Text.draw = function(state, x, y, w, h, text, options)
   if options then
     -- center alignment
     if options.alignment_h == ":" then
-      x = x + w/2 - textwidth /2
+      x = x + w / 2 - textwidth / 2
 
-    -- right alignment
+      -- right alignment
     elseif options.alignment_h == ">" then
       x = x + w - textwidth
     end
 
     -- vertically aligned to the center
     if options.alignment_v == "-" then
-      y = y + h/2 - textheight/2
+      y = y + h / 2 - textheight / 2
 
-    -- aligned to the bottom
+      -- aligned to the bottom
     elseif options.alignment_v == "v" then
       y = y + h - textheight
     end

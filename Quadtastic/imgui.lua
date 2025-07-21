@@ -9,23 +9,23 @@ local imgui = {}
 imgui.double_click_threshold = .5
 
 imgui.init_layout_state = function(
-  parent_layout, -- the layout that contains this layout
-  next_x, -- where the next layout-aware component should be drawn
-  next_y,
-  max_w, -- the maximum dimensions that this layout should span
-  max_h
+    parent_layout, -- the layout that contains this layout
+    next_x,      -- where the next layout-aware component should be drawn
+    next_y,
+    max_w,       -- the maximum dimensions that this layout should span
+    max_h
 )
   return {
     next_x = next_x or 0, -- where the next layout-aware component should be drawn
     next_y = next_y or 0,
     max_w = max_w or (parent_layout and parent_layout.max_w),
     max_h = max_h or (parent_layout and parent_layout.max_h),
-    adv_x = 0, -- the advance in x and y of the last drawn element
+    adv_x = 0,                     -- the advance in x and y of the last drawn element
     adv_y = 0,
-    acc_adv_x = next_x or 0, -- the accumulative advance in x and y
+    acc_adv_x = next_x or 0,       -- the accumulative advance in x and y
     acc_adv_y = next_y or 0,
     parent_layout = parent_layout, -- the layout that contains this layout,
-                                   -- or nil if this is the root layout.
+    -- or nil if this is the root layout.
   }
 end
 
@@ -38,36 +38,36 @@ imgui.pop_layout_state = function(state)
 end
 
 imgui.push_style = function(state, type, new_value)
-  if not state.style[type.."_stack"] then
-    state.style[type.."_stack"] = {state.style[type]}
+  if not state.style[type .. "_stack"] then
+    state.style[type .. "_stack"] = { state.style[type] }
   else
-    table.insert(state.style[type.."_stack"], state.style[type])
+    table.insert(state.style[type .. "_stack"], state.style[type])
   end
   state.style[type] = new_value
 end
 
 imgui.pop_style = function(state, type)
-  if not state.style[type.."_stack"] then
-    error("There was no push stack for type "..type)
+  if not state.style[type .. "_stack"] then
+    error("There was no push stack for type " .. type)
   end
-  state.style[type] = table.remove(state.style[type.."_stack"])
+  state.style[type] = table.remove(state.style[type .. "_stack"])
 end
 
 local function init_input()
-  return { -- all data related to input. will be hidden on inactive windows
+  return {          -- all data related to input. will be hidden on inactive windows
     mouse = {
       buttons = {}, -- Holds information about which buttons are pressed
-      x = 0, -- current mouse x position
-      y = 0, -- current mouse y position
-      old_x = 0, -- mouse position in the previous frame
+      x = 0,        -- current mouse x position
+      y = 0,        -- current mouse y position
+      old_x = 0,    -- mouse position in the previous frame
       old_y = 0,
-      dx = 0, -- mouse movement in x since the last update
-      dy = 0, -- mouse movement in y since the last update
+      dx = 0,       -- mouse movement in x since the last update
+      dy = 0,       -- mouse movement in y since the last update
       wheel_dx = 0, -- horizontal mouse wheel movement since the last update
       wheel_dy = 0, -- vertical mouse wheel movement since the last update
     },
     keyboard = {
-      keys = {}, -- List of all keys. Might not be complete
+      keys = {},      -- List of all keys. Might not be complete
       scancodes = {}, -- List of all scancodes. Might not be complete
       -- Both lists contain key states for keys that have been pressed.
       -- Each keystate contains whether the key is pressed, and how many
@@ -93,24 +93,24 @@ imgui.init_state = function(transform)
       cursor_pos = 0,
       cursor_dt = 0,
       selection_end = nil, -- If there is a selection then it ranges from the
-                           -- current cursor position to selection_end.
+      -- current cursor position to selection_end.
     },
-    dt = 0, -- Time since last update
-    t = 0, -- Total time since app was started
-    second = 0, -- Accumulative timer that counts up to a second
+    dt = 0,             -- Time since last update
+    t = 0,              -- Total time since app was started
+    second = 0,         -- Accumulative timer that counts up to a second
     style = {
-      font = nil, -- The font that is being used
+      font = nil,       -- The font that is being used
       stylesheet = nil, -- A texture atlas with gui styles
       cursors = os.cursors(),
     },
     layout = imgui.init_layout_state(nil), -- the current layout
-    transform = transform, -- the current transform
-    tooltip_time = 0, -- the time that the mouse has spent on a widget
-    menu_depth = 0, -- The menu depth will be used by menus to decide how to render
-    current_menus = {}, -- List of currently selected menu entries
-    menu_bounds = {}, -- Dimensions of menus on each menu level
-    toasts = {}, -- The list of toasts
-    mousestring = nil, -- string drawn next to the mouse cursor
+    transform = transform,                 -- the current transform
+    tooltip_time = 0,                      -- the time that the mouse has spent on a widget
+    menu_depth = 0,                        -- The menu depth will be used by menus to decide how to render
+    current_menus = {},                    -- List of currently selected menu entries
+    menu_bounds = {},                      -- Dimensions of menus on each menu level
+    toasts = {},                           -- The list of toasts
+    mousestring = nil,                     -- string drawn next to the mouse cursor
   }
   return state
 end
@@ -200,10 +200,10 @@ local function init_mouse_state(state, button)
   if not state.input.mouse.buttons[button] then
     state.input.mouse.buttons[button] = {
       pressed = false, -- whether the button is currently being pressed
-      at_x = 0, -- the x coordinate where the button was pressed
-      at_y = 0, -- the y coordinate where the button was pressed
-      presses = 0, -- how many times the button was pressed since the last update
-      releases = 0, -- how many times the button was released since the last update
+      at_x = 0,        -- the x coordinate where the button was pressed
+      at_y = 0,        -- the y coordinate where the button was pressed
+      presses = 0,     -- how many times the button was pressed since the last update
+      releases = 0,    -- how many times the button was released since the last update
     }
   end
 end
@@ -231,7 +231,7 @@ imgui.mousepressed = function(state, x, y, button)
 
   if button_state.prev_pressed_at then
     local delta = os.difftime(button_state.pressed_at -
-                              button_state.prev_pressed_at)
+      button_state.prev_pressed_at)
     button_state.double_clicked = delta < imgui.double_click_threshold
   end
   -- Increment the number of clicks that happened since the last update
@@ -250,9 +250,8 @@ imgui.mousereleased = function(state, _, _, button)
 end
 
 imgui.mousemoved = function(state, x, y, dx, dy)
-  state.input.mouse.x,  state.input.mouse.y  = x, y
+  state.input.mouse.x, state.input.mouse.y   = x, y
   state.input.mouse.dx, state.input.mouse.dy = dx, dy
-
 end
 
 imgui.wheelmoved = function(state, x, y)
@@ -267,7 +266,7 @@ local function init_key_state(state, key)
   if not state.input.keyboard.keys[key] then
     state.input.keyboard.keys[key] = {
       pressed = false,
-      presses = 0, -- how many times the key was pressed since the last update
+      presses = 0,  -- how many times the key was pressed since the last update
       releases = 0, -- how many times the key was released since the last update
     }
   end
@@ -277,7 +276,7 @@ local function init_scancode_state(state, key)
   if not state.input.keyboard.scancodes[key] then
     state.input.keyboard.scancodes[key] = {
       pressed = false,
-      presses = 0, -- how many times the scancode was pressed since the last update
+      presses = 0,  -- how many times the scancode was pressed since the last update
       releases = 0, -- how many times the scancode was released since the last update
     }
   end
@@ -329,8 +328,8 @@ imgui.is_mouse_in_rect = function(state, x, y, w, h, mx, my, transform)
   mx = mx or state.input.mouse.x
   my = my or state.input.mouse.y
   transform = transform or state.transform
-  return Rectangle.contains({x = x, y = y, w = w, h = h},
-                            transform:unproject(mx, my))
+  return Rectangle.contains({ x = x, y = y, w = w, h = h },
+    transform:unproject(mx, my))
 end
 
 imgui.was_mouse_pressed = function(state, x, y, w, h, button)
@@ -384,8 +383,8 @@ imgui.is_key_pressed = function(state, key)
   return state.input.keyboard.keys[key] and state.input.keyboard.keys[key].pressed
 end
 
-local all_modifiers = {"numlock", "capslock", "scrolllock", "rshift", "lshift",
-                       "rctrl", "lctrl", "ralt", "lalt", "rgui", "lgui", "mode"}
+local all_modifiers = { "numlock", "capslock", "scrolllock", "rshift", "lshift",
+  "rctrl", "lctrl", "ralt", "lalt", "rgui", "lgui", "mode" }
 
 imgui.are_exact_modifiers_pressed = function(gui_state, modifiers)
   if not modifiers then return true end
@@ -398,10 +397,10 @@ imgui.are_exact_modifiers_pressed = function(gui_state, modifiers)
     local group = string.gmatch(modifier, "%*(.+)")()
     if group ~= "" then
       pressed = pressed and (
-        imgui.is_key_pressed(gui_state, "l"..group) or
-        imgui.is_key_pressed(gui_state, "r"..group))
-      wanted_modifiers["l"..group] = true
-      wanted_modifiers["r"..group] = true
+        imgui.is_key_pressed(gui_state, "l" .. group) or
+        imgui.is_key_pressed(gui_state, "r" .. group))
+      wanted_modifiers["l" .. group] = true
+      wanted_modifiers["r" .. group] = true
     else
       pressed = pressed and imgui.is_key_pressed(gui_state, modifier)
       wanted_modifiers[modifier] = true
@@ -433,7 +432,7 @@ end
 function imgui.toggle_menu(state, label)
   -- Erase all menus on deeper level, no matter if we open or close the menu
   -- on the current level
-  for i=state.menu_depth + 2,#state.current_menus do
+  for i = state.menu_depth + 2, #state.current_menus do
     state.current_menus[i] = nil
   end
 
@@ -455,9 +454,10 @@ function imgui.is_any_menu_open(state)
 end
 
 function imgui.close_menus(state, from_level)
-  if not from_level or from_level == 0 then state.current_menus = {}
+  if not from_level or from_level == 0 then
+    state.current_menus = {}
   else
-    for i=from_level,#state.current_menus - 1 do
+    for i = from_level, #state.current_menus - 1 do
       state.current_menus[i + 1] = nil
     end
   end

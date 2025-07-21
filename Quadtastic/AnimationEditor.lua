@@ -14,25 +14,27 @@ local function draw_elements(gui_state, state, elements)
     end
 
     imgui.push_style(gui_state, "font", gui_state.style.small_font)
-    for i = 1, 32 do
+    --Calculate how many labels we can fit in the current window
+
+    for i = 1, 128 do
         local dx = state.animation_window_delta ~= nil and state.animation_window_delta.x + i * 32 or i * 32
         
         Label.draw(
             gui_state,
             dx,
             nil,
-            64,
+            32,
             12,
             i,
             { alignment_h = ":", alignment_v = ":" }
         )
         local r,g,b,a = love.graphics.getColor()
-        love.graphics.setColor(r, g, b, 100)
+        love.graphics.setColor(255, 255, 255, 50)
         love.graphics.rectangle(
             "fill",
-            (gui_state.layout.next_x + dx)+30,
+            (gui_state.layout.next_x + dx),
             gui_state.layout.next_y,
-            3,
+            1,
             gui_state.layout.max_h
         )
         love.graphics.setColor(r, g, b, a)
@@ -72,13 +74,12 @@ local function draw_elements(gui_state, state, elements)
             state.animation_window_delta.y = state.animation_window_delta.y + dy
         end
     end
-    if(my < -1 and my > -4 and in_x) then
-        if(m1_down) then
-            if(state.animation_window~=nil) then
-                -- Drag-resize from the top
-                local new_h = state.animation_window.h + dy
-                state.animation_window.y = state.animation_window.y - dy*4
-            end
+    if(state.animation_window_delta ~= nil) then
+        print("Animation window delta: " .. tostring(state.animation_window_delta.x) .. ", " .. tostring(state.animation_window_delta.y))
+        if(state.animation_window_delta.x > -32) then
+            state.animation_window_delta.x = -32
+        elseif (state.animation_window_delta.x < -3576) then
+            state.animation_window_delta.x = -3576
         end
     end
 end
