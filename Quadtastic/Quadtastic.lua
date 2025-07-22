@@ -676,7 +676,7 @@ Quadtastic.draw = function(app, state, gui_state)
                         Frame.start(gui_state, nil, nil, 96, 96)
                         if state.image and state.animation_window then
                             local anim = state.animation_list.selected
-                            local frame = anim and anim.frames[state.animation_window.displayed_frame] or nil
+                            local frame = anim and anim.frames[anim.displayed_frame] or nil
                             if frame then
                                 local quad = frame.quad
                                 love.graphics.setColor(255, 255, 255, 255)

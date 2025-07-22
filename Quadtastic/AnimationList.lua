@@ -117,19 +117,23 @@ AnimationList.draw = function(gui_state, state, x, y, w, h, last_hovered)
                     noscissor = true
                 })
                 if state.image then
-                    local dict_length = dictionary_length(state.animations)
+                    local animation_count = dictionary_length(state.animations)
                     clicked, hovered, double_clicked = draw_elements(gui_state, state, state.animations, last_hovered,quad_bounds)
-                    local clicked,hovered, double_clicked = Button.draw(gui_state,dict_length>0 and 0 or -96,dict_length*16,12,12,"+")
+                    local clicked,hovered, double_clicked = Button.draw(gui_state,animation_count>0 and 0 or -96,animation_count*16,12,12,"+")
                     if(clicked) then
                         local name = "New Animation " .. (dictionary_length(state.animations) + 1)
-                        state.animations[dict_length] = {
+                        state.animations[animation_count] = {
                             name = name,
                             frames = {},
+                            frames_compact = {}, --Same as frame, but without any empty frames
                             duration = 1,
+                            displayed_frame = 1,
                             loop = true,
-                            index = dict_length,
+                            index = animation_count,
                         }
-                        print("State.animations", state.animations)
+                        if(animation_count == 0) then
+                            state.animation_list.selected = state.animations[animation_count]
+                        end
                     end
                 end
             end Layout.finish(gui_state, "|")

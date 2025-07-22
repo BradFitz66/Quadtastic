@@ -9,5 +9,9 @@
     "Lua.workspace.library": [
         "${3rd}/love2d/library"
     ],
-    "pixelbyte.love2d.revealStatus": true
+    "pixelbyte.love2d.revealStatus": true,
+    "Lua.diagnostics.disable": [
+        "need-check-nil",
+        "inject-field"
+    ]
 }

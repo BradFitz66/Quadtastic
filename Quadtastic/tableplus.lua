@@ -100,7 +100,7 @@ function tableplus.compact(a)
   local result = {}
   for k,v in pairs(a) do
     if v ~= nil then
-      result[k] = v
+      tableplus.insert(result, v)
     end
   end
   return result

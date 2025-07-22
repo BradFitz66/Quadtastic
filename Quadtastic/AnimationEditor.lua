@@ -6,9 +6,19 @@ local Layout = require(current_folder .. ".Layout")
 local Inputfield = require(current_folder .. ".Inputfield")
 local Button = require(current_folder .. ".Button")
 local Tooltip = require(current_folder .. ".Tooltip")
+local tableplus = require(current_folder .. ".tableplus")
+print(current_folder)
+local inspect = require("lib.inspect")
 local AnimationEditor = {}
 
-local grid_mesh
+
+local function dict_length(dict)
+    local count = 0
+    for _ in pairs(dict) do
+        count = count + 1
+    end
+    return count
+end
 
 local function draw_elements(gui_state, state, elements)
     if state.animation_window_delta == nil then
@@ -38,10 +48,10 @@ local function draw_elements(gui_state, state, elements)
                 { alignment_h = ":", alignment_v = ":" }
             )
             
-            local anim = selected_animation and selected_animation.frames[i] or nil
+            local frame = selected_animation and selected_animation.frames[i] or nil
             if(selected_animation~=nil) then
-                if (anim) then
-                    local quad = anim.quad
+                if (frame) then
+                    local quad = frame.quad
                     love.graphics.setColor(255, 255, 255, 255)
                     love.graphics.draw(
                         state.image,
@@ -59,7 +69,7 @@ local function draw_elements(gui_state, state, elements)
                         .5,
                         .5
                     )
-                    anim.duration = Inputfield.draw(gui_state,0, 54, nil, nil, tostring(anim.duration),{filter = function(c)
+                    frame.duration = Inputfield.draw(gui_state,0, 54, nil, nil, tostring(frame.duration),{filter = function(c)
                         return c:match("%d")
                     end})
                     Tooltip.draw(
@@ -77,22 +87,24 @@ local function draw_elements(gui_state, state, elements)
                         12,
                         12,
                         "",
-                        anim and gui_state.style.quads.buttons.minus or gui_state.style.quads.buttons.plus,
+                        frame and gui_state.style.quads.buttons.minus or gui_state.style.quads.buttons.plus,
                         { alignment_h = ":", alignment_v = ":", center_icon=true }
                     )
                     if pressed then
                         if(state.animation_list.selected ~= nil) then
-                            if anim then
+                            if frame then
                                 state.animation_list.selected.frames[i] = nil
+                                
                             else
                                 state.animation_list.selected.frames[i] = {
                                     quad = state.selection:get_selection()[1],
                                     duration = 1,
                                 }
                             end
-                        end
+                            state.animation_list.selected.frames_compact = tableplus.compact(state.animation_list.selected.frames)
+                        end 
                     end
-                elseif (#state.selection:get_selection()~=1 and anim) then
+                elseif (#state.selection:get_selection()~=1 and frame) then
                     local pressed = Button.draw(
                         gui_state,
                         9,
@@ -106,6 +118,7 @@ local function draw_elements(gui_state, state, elements)
                     if pressed then
                         if(state.animation_list.selected ~= nil) then
                             state.animation_list.selected.frames[i] = nil
+                            state.animation_list.selected.frames_compact = tableplus.compact(state.animation_list.selected.frames)
                         end
                     end
                 end
@@ -179,20 +192,19 @@ AnimationEditor.draw = function(gui_state, state, x, y, w, h)
     end
     if(state.playing_anim) then
         local selected_animation = state.animation_list and state.animation_list.selected or nil
-        local anim = selected_animation and selected_animation.frames or nil
-        if(anim and #anim > 0) then
-            --Make sure displayed_frame is not higher than #anim
-            if(state.animation_window.displayed_frame > #anim) then
-                state.animation_window.displayed_frame = 1
+        local frames = selected_animation~=nil and selected_animation.frames_compact or nil
+        if(frames and #frames > 0) then
+            if(selected_animation.displayed_frame > #frames) then
+                selected_animation.displayed_frame = 1
             end
-            local duration = anim[state.animation_window.displayed_frame].duration/1000
-            local len = #anim
+            local duration = frames[selected_animation.displayed_frame].duration/1000
+            local len = dict_length(frames)
             state.animation_window.timer = state.animation_window.timer + love.timer.getDelta()
             if(state.animation_window.timer >= duration) then
-                state.animation_window.displayed_frame = state.animation_window.displayed_frame + 1
+                selected_animation.displayed_frame = selected_animation.displayed_frame + 1
                 state.animation_window.timer = 0
-                if(state.animation_window.displayed_frame > len) then
-                    state.animation_window.displayed_frame = 1
+                if(selected_animation.displayed_frame > len) then
+                    selected_animation.displayed_frame = 1
                 end
             end
         end
