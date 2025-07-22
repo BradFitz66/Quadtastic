@@ -279,7 +279,7 @@ Scrollpane.finish = function(state, scrollpane_state, content_w, content_h)
     total_content_h = total_content_h + scrollpane_state.y - (content_h - inner_h)
   end
 
-  local has_vertical = (scrollpane_state.is_dragging_vertical or total_content_h > inner_h) and scrollpane_state.has_vertical
+  local has_vertical = (scrollpane_state.is_dragging_vertical or total_content_h > inner_h) 
 
   -- we have to take cases into account where the viewport can move beyond
   -- the content

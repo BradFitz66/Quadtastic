@@ -7,7 +7,9 @@ setmetatable(State, {
     state.transitions = transitions
     state.coroutine = nil -- the current coroutine
     -- Additional data
-    state.data = data or {}
+    state.data = data or {
+      tool="select"
+    }
 
     return state
   end

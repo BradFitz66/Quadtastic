@@ -547,7 +547,6 @@ local function select_tool(app, gui_state, state, img_w, img_h)
         --We do this here in cases where the origin may be outside of the bounding box of the quad
         --If we didn't do this, we would just end up deselecting the quad when attempting to move the origin and thus make it impossible to change
         if(#state.selection:get_selection()==1) then
-            print("Determining if within range of origin")
             for i, v in ipairs(state.selection:get_selection()) do
                 if libquadtastic.is_quad(v) then
                 if(v.ox and v.oy) then

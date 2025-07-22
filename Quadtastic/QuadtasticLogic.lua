@@ -25,6 +25,13 @@ local function add_path_to_recent_files(interface, data, filepath)
     data.settings.latest_qua = common.split(filepath)
     interface.store_settings(data.settings)
 end
+local function dict_length(dict)
+    local count = 0
+    for _ in pairs(dict) do
+        count = count + 1
+    end
+    return count
+end
 
 local QuadtasticLogic = {}
 
@@ -146,6 +153,29 @@ function QuadtasticLogic.transitions(interface)
             end
         end,
 
+        rename_animation = function(app,data,state, animation_index, filter_func)
+            local retry = false
+            ::rename_start::
+            local ret
+            local new_key = state.animations[animation_index] and state.animations[animation_index].name or "New animation"
+            local text = not retry and "Rename animation:" or "Name already taken\nRename animation:"
+            ret, new_key = interface.query(text, new_key,
+                {
+                    escape = S.buttons.cancel,
+                    enter = S.buttons.ok,
+                }, {filter=filter_func})
+            if ret == "OK" then
+                for i = 1, dict_length(state.animations) do
+                    print("Animation name:", state.animations[i-1].name, "new_key:", new_key, "i:", i-1)
+                    if state.animations[i-1].name == new_key and i-1 ~= animation_index then
+                        retry = true
+                        goto rename_start -- goto is ugly, but recalling this function instead from inside itself is weird and causes errors
+                    end
+                end
+                state.animations[animation_index].name = new_key~= "" and new_key or "New Animation " .. (animation_index)
+            end
+        end,
+
         sort = function(app, data, quads, sort_type)
             -- local ret, new_key
             -- ret, new_key = interface.query(S.dialogs.rename.name_prompt, new_key,
@@ -189,21 +219,17 @@ function QuadtasticLogic.transitions(interface)
                 end
             end
             if (sort_type == "row-major") then
-                ::show_dialog:: --Very ugly way to reveal the dialog again if the user enters a non-number
                 local ret
                 local new_key = "15"
                 ret, new_key = interface.query("Row distance threshold \n Sprites that have a Y position distance below or equal to this threshold will be considered on the same row", new_key,
                     {
                         escape = S.buttons.cancel,
                         enter = S.buttons.ok
-                    })
-                --Make sure the user entered a number
-                if (tonumber(new_key) == nil) then
-                    local a = interface.show_dialog("Please enter a number")
-                    if(a == "OK") then
-                        goto show_dialog
-                    end
-                    return
+                    }, {filter=function(c)
+                        return c:match("%d")
+                    end})
+                if(new_key == "") then
+                    new_key = "0"
                 end
                 if(ret == "OK") then
                     new_group = data.selection:sorted_selection_rowmajor(tonumber(new_key))

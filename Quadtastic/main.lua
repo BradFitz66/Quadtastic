@@ -80,6 +80,7 @@ function love.load()
   -- Initialize the state
   app = AppLogic(Quadtastic)
   app.quadtastic.new()
+  app.quadtastic.switch_tool("select")
   love.graphics.setDefaultFilter("nearest", "nearest")
   local med_font = love.graphics.newFont("res/m5x7.ttf", 16)
   med_font:setFilter("nearest", "nearest")

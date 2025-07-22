@@ -74,7 +74,7 @@ Text.draw = function(state, x, y, w, h, text, options)
   local textheight = 16
   w = w or textwidth
   h = h or textheight
-
+  
   if options then
     -- center alignment
     if options.alignment_h == ":" then

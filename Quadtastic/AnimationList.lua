@@ -6,7 +6,7 @@ local Scrollpane = require(current_folder .. ".Scrollpane")
 local imgui = require(current_folder .. ".imgui")
 local libquadtastic = require(current_folder .. ".libquadtastic")
 local Button = require(current_folder .. ".Button")
-
+local tableplus = require(current_folder .. ".tableplus")
 local AnimationList = {}
 
 local function draw_elements(gui_state, state, elements, last_hovered, quad_bounds)
@@ -49,32 +49,7 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
                 gui_state.style.stylesheet, background_quads.bottom, gui_state.layout.next_x,
                 gui_state.layout.next_y + 14, 0, gui_state.layout.max_w-8, 1)
 
-                
-            local raw_quads, quads
-
-            x,y = gui_state.layout.next_x, gui_state.layout.next_y + 2
-            w,h = gui_state.layout.max_w - 8, 12
-            local clicked, pressed, hovered = Button.draw_flat(gui_state, x,y,w,h, quads)
-            if clicked then
-                state.animation_list.selected = element
-            end
-            if hovered then
-                --Is this the same as the last hovered element?
-                if state.animation_list.last_hovered_element ~= element then
-                    state.animation_list.last_hovered_element = element
-                    state.animation_list.hovered_element = element
-                end
-            else
-                if state.animation_list.last_hovered_element == element then
-                    state.animation_list.last_hovered_element = nil
-                    state.animation_list.hovered_element = nil
-                end
-            end
-
-
-
-
-            input_consumed = clicked or pressed or hovered
+            
             Text.draw(gui_state, 8, nil, gui_state.layout.max_w, nil,
                 string.format("%s", tostring(name)))
         end
@@ -82,12 +57,31 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
         gui_state.layout.adv_x = gui_state.layout.max_w
         gui_state.layout.adv_y = row_height
 
-        -- Check if the mouse was clicked on this list entry
-        if imgui.was_mouse_pressed(gui_state, x, y, w, h) then
+        local x, y = gui_state.layout.next_x, gui_state.layout.next_y
+        local w, h = gui_state.layout.adv_x, gui_state.layout.adv_y
+        if not input_consumed and imgui.was_mouse_pressed(gui_state, x, y, w, h) then
+            state.animation_list.selected = element
+            if(state.animation_window) then
+                state.animation_window.displayed_frame = 1
+            end
             if gui_state.input.mouse.buttons[1].double_clicked then
+                double_clicked_element = element
+                print("Double clicked on animation:", element.name)
             end
         end
+        if(imgui.is_mouse_in_rect(gui_state,x,y,w,h)) then
+            hovered_element = element
+            if not state.animation_list.hovered_element or state.animation_list.hovered_element ~= element then
+                state.animation_list.hovered_element = element
+            end
+        elseif state.animation_list.hovered_element == element then
+            state.animation_list.hovered_element = nil
+            hovered_element = nil
+        end
 
+
+
+        -- Check if the mouse was clicked on this list entry
         Layout.next(gui_state, "|")
     end
     --Add a + button to add a new animation
@@ -133,6 +127,7 @@ AnimationList.draw = function(gui_state, state, x, y, w, h, last_hovered)
                             frames = {},
                             duration = 1,
                             loop = true,
+                            index = dict_length,
                         }
                         print("State.animations", state.animations)
                     end

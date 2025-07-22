@@ -95,6 +95,17 @@ function tableplus.shallow_equals(a, b)
   return true
 end
 
+---Takes a table and compacts it (removes all nil values)
+function tableplus.compact(a)
+  local result = {}
+  for k,v in pairs(a) do
+    if v ~= nil then
+      result[k] = v
+    end
+  end
+  return result
+end
+
 function table.equals(o1, o2, ignore_mt)
   if o1 == o2 then return true end
   local o1Type = type(o1)

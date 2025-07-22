@@ -185,7 +185,7 @@ function Dialog.show_dialog(message, buttons)
   return coroutine.yield(dialog_state)
 end
 
-function Dialog.query(message, input, buttons)
+function Dialog.query(message, input, buttons, options)
   -- Draw the dialog
   local function draw(app, data, gui_state, w, h)
     do window_start(data, gui_state, w, h)
@@ -197,10 +197,15 @@ function Dialog.query(message, input, buttons)
         Layout.next(gui_state, "|")
         imgui.pop_style(gui_state, "font")
         local committed
+        if (options == nil) then
+            options = {}
+        end
+        options.select_all = not data.was_drawn
+        options.forced_keyboard_focus = true
+
         data.input, committed = InputField.draw(gui_state, nil, nil,
                                      w/2, nil, data.input,
-                                     {forced_keyboard_focus = true,
-                                      select_all = not data.was_drawn})
+                                     options)
         Layout.next(gui_state, "|")
         local clicked_button = show_buttons(gui_state, data.buttons)
         if clicked_button then

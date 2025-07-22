@@ -5,15 +5,16 @@ local Text = require(current_folder .. ".Text")
 
 local Inputfield = {}
 
-local function handle_input(state, _, y, w, h, content, text_x)
+local function handle_input(state, _, y, w, h, content, text_x, filter)
   assert(state.input)
   -- Track whether the cursor was moved. In that case we will always display it
   local cursor_moved = false
+  
 
   local function has_selection() return state.input_field.selection_end end
   local function is_shift_down()
     return imgui.is_key_pressed(state, "lshift") or
-           imgui.is_key_pressed(state, "rshift")
+        imgui.is_key_pressed(state, "rshift")
   end
   local function clear_selection() state.input_field.selection_end = nil end
   local function get_selection_range()
@@ -63,7 +64,7 @@ local function handle_input(state, _, y, w, h, content, text_x)
         state.input_field.selection_end = state.input_field.cursor_pos
       end
     elseif has_selection() then
-        clear_selection()
+      clear_selection()
     end
     state.input_field.cursor_pos = new_cursor
     cursor_moved = true
@@ -75,7 +76,7 @@ local function handle_input(state, _, y, w, h, content, text_x)
         state.input_field.selection_end = state.input_field.cursor_pos
       end
     elseif has_selection() then
-        clear_selection()
+      clear_selection()
     end
     state.input_field.cursor_pos = new_cursor
     cursor_moved = true
@@ -88,8 +89,8 @@ local function handle_input(state, _, y, w, h, content, text_x)
 
   local function delete_selection()
     local from, to = get_selection_range()
-    content = string.sub(content, 1 , from) ..
-              string.sub(content, to + 1, -1)
+    content = string.sub(content, 1, from) ..
+        string.sub(content, to + 1, -1)
     state.input_field.cursor_pos = from
     clear_selection()
   end
@@ -99,8 +100,8 @@ local function handle_input(state, _, y, w, h, content, text_x)
     if has_selection() then
       delete_selection()
     elseif state.input_field.cursor_pos > 0 then
-      content = string.sub(content, 1 , state.input_field.cursor_pos - 1) ..
-                string.sub(content, state.input_field.cursor_pos + 1, -1)
+      content = string.sub(content, 1, state.input_field.cursor_pos - 1) ..
+          string.sub(content, state.input_field.cursor_pos + 1, -1)
       -- Reduce cursor position by 1
       state.input_field.cursor_pos = math.max(0, state.input_field.cursor_pos - 1)
     end
@@ -110,19 +111,22 @@ local function handle_input(state, _, y, w, h, content, text_x)
     if has_selection() then
       delete_selection()
     elseif state.input_field.cursor_pos < #content then
-      content = string.sub(content, 1 , state.input_field.cursor_pos) ..
-                string.sub(content, state.input_field.cursor_pos + 2, -1)
+      content = string.sub(content, 1, state.input_field.cursor_pos) ..
+          string.sub(content, state.input_field.cursor_pos + 2, -1)
       -- The cursor position does not change in this case
     end
   end
 
   local newtext = state.input.keyboard.text or ""
+  --Remove filter characters
   if #newtext > 0 and has_selection() then
     delete_selection()
   end
-  content = string.sub(content, 1 , state.input_field.cursor_pos) ..
-            newtext ..
-            string.sub(content, state.input_field.cursor_pos + 1, -1)
+  if not filter and #newtext>0  or (#newtext>0 and filter(newtext)) then
+  content = string.sub(content, 1, state.input_field.cursor_pos) ..
+      newtext ..
+      string.sub(content, state.input_field.cursor_pos + 1, -1)
+  end
   -- Advance the cursor position by the lenght of the added text
   state.input_field.cursor_pos = math.min(#content, state.input_field.cursor_pos + #newtext)
 
@@ -132,7 +136,7 @@ local function handle_input(state, _, y, w, h, content, text_x)
     local cursor_text_width = Text.min_width(state,
       string.sub(content, 1, state.input_field.cursor_pos))
     if cursor_text_width + 20 > w - 6 then
-      text_x = text_x - (cursor_text_width + 20 - (w-6))
+      text_x = text_x - (cursor_text_width + 20 - (w - 6))
     end
   end
 
@@ -161,8 +165,8 @@ local function handle_input(state, _, y, w, h, content, text_x)
   local cursor_pos_at_mousex
   -- Calculate the cursor position only once since it's a pricey calculation
   if state.input.mouse.buttons[1] and
-    (state.input.mouse.buttons[1].pressed or
-     state.input.mouse.buttons[1].presses > 0)
+      (state.input.mouse.buttons[1].pressed or
+        state.input.mouse.buttons[1].presses > 0)
   then
     local mx = state.input.mouse.x
     -- Set the cursor position
@@ -189,9 +193,12 @@ local function handle_input(state, _, y, w, h, content, text_x)
     end
     -- Round the cursor position
     if actual_width - delta > .5 * last_letter_width then cursor_pos = cursor_pos - 1 end
-    cursor_pos = math.floor(cursor_pos + .5)
     if cursor_pos ~= state.input_field.cursor_pos then
       cursor_moved = true
+    end
+    if center_text then
+      -- Center the cursor position in the text field
+      cursor_pos = cursor_pos - math.floor((w - 6) / (2 * m_width))
     end
 
     -- Limit cursor position
@@ -201,7 +208,7 @@ local function handle_input(state, _, y, w, h, content, text_x)
 
   -- If the LMB is still pressed, extend the selection accordingly
   if state.input.mouse.buttons[1] and
-    state.input.mouse.buttons[1].pressed
+      state.input.mouse.buttons[1].pressed
   then
     assert(cursor_pos_at_mousex)
     local cursor_pos = cursor_pos_at_mousex
@@ -214,7 +221,7 @@ local function handle_input(state, _, y, w, h, content, text_x)
 
   -- If the LMB was pressed in the last frame, set the cursor position
   if state.input.mouse.buttons[1] and
-    state.input.mouse.buttons[1].presses > 0
+      state.input.mouse.buttons[1].presses > 0
   then
     assert(cursor_pos_at_mousex)
     local cursor_pos = cursor_pos_at_mousex
@@ -231,7 +238,7 @@ local function handle_input(state, _, y, w, h, content, text_x)
 
   -- Remove an empty selection
   if has_selection() and
-    state.input_field.selection_end == state.input_field.cursor_pos
+      state.input_field.selection_end == state.input_field.cursor_pos
   then
     clear_selection()
   end
@@ -248,7 +255,7 @@ Inputfield.draw = function(state, x, y, w, h, content, options)
 
   local margin_x = 4
   local textwidth = Text.min_width(state, content)
-  w = w or math.max(32, 2*margin_x + (textwidth or 32))
+  w = w or math.max(32, 2 * margin_x + (textwidth or 32))
   h = h or 18
 
   state.layout.adv_x = w
@@ -272,7 +279,7 @@ Inputfield.draw = function(state, x, y, w, h, content, options)
 
   -- Highlight if mouse is over button
   if state and state.input and
-    imgui.is_mouse_in_rect(state, x, y, w, h)
+      imgui.is_mouse_in_rect(state, x, y, w, h)
   then
     -- Change cursor to indicate editable text
     love.mouse.setCursor(state.style.cursors.text_cursor)
@@ -301,8 +308,10 @@ Inputfield.draw = function(state, x, y, w, h, content, options)
       if options and options.select_all then
         state.input_field.cursor_pos = #content
         state.input_field.selection_end = 0
+      elseif not options then
+        options={}
       end
-      content, text_x = handle_input(state, x, y, w, h, content, text_x)
+      content, text_x = handle_input(state, x, y, w, h, content, text_x,  options.filter)
       if imgui.was_key_pressed(state, "return") then
         committed_content = content
         imgui.consume_key_press(state, "return")
@@ -310,7 +319,7 @@ Inputfield.draw = function(state, x, y, w, h, content, options)
     else
       -- The widget does not have the keyboard focus
       if textwidth + 20 > w - 6 then
-        text_x = text_x - (textwidth + 20 - (w-6))
+        text_x = text_x - (textwidth + 20 - (w - 6))
       end
     end
   end
@@ -323,7 +332,8 @@ Inputfield.draw = function(state, x, y, w, h, content, options)
   else
     imgui.push_style(state, "font_color", state.style.palette.shades.brightest)
   end
-  Text.draw(state, text_x, y + margin_y, nil, nil, text, options)
+
+  Text.draw(state, text_x, y + margin_y, w, h, text, options)
   imgui.pop_style(state, "font_color")
 
   -- Restore state

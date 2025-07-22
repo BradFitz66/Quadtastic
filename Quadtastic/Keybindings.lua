@@ -26,7 +26,7 @@ local linux = os == "Linux"
 local keybindings = {
 	-- selection
 	select_all = {"a", {mac and "*gui" or "*ctrl"}},
-	delete = {"backspace"},
+	delete = {"delete"},
 	rename = {mac and "return" or "f2"},
 	group = {"g", {mac and "*gui" or "*ctrl"}},
 	ungroup = {"g", {mac and "*gui" or "*ctrl", "*shift"}},
