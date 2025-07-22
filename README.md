@@ -1,3 +1,7 @@
+This is a fork of quadtastic that adds a bunch of quality of life stuff that I felt was missing, such as ability to define the origin point of quads, a better sorting method for quads with varying sizes, as-well as entirely new features like a (very) WIP animation editor/creator.
+
+
+
 <h1 align="center">Quadtastic!</h1>
 
 <p align="center">
