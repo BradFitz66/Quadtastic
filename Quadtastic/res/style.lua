@@ -194,6 +194,7 @@ return {
     select = {x = 64, y = 64, w = 13, h = 13},
     strip = {x = 80, y = 48, w = 13, h = 13},
     wand = {x = 80, y = 64, w = 13, h = 13},
+	origin = {x=112, y=32, w=6,h=6}
   },
   tooltip = {
     border = {

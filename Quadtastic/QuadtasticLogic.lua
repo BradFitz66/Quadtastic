@@ -165,9 +165,8 @@ function QuadtasticLogic.transitions(interface)
                     enter = S.buttons.ok,
                 }, {filter=filter_func})
             if ret == "OK" then
-                for i = 1, dict_length(state.animations) do
-                    print("Animation name:", state.animations[i-1].name, "new_key:", new_key, "i:", i-1)
-                    if state.animations[i-1].name == new_key and i-1 ~= animation_index then
+                for _, anim in pairs(state.animations) do
+                    if anim.name == new_key and anim.index ~= animation_index then
                         retry = true
                         goto rename_start -- goto is ugly, but recalling this function instead from inside itself is weird and causes errors
                     end
@@ -271,7 +270,6 @@ function QuadtasticLogic.transitions(interface)
             if data.turbo_workflow then app.quadtastic.turbo_workflow_on_change() end
             --Time execution
             local end_time = os.clock()
-            print("Sort took " .. end_time - start_time .. " seconds")
         end,
 
         remove = function(app, data, quads)
@@ -452,7 +450,6 @@ function QuadtasticLogic.transitions(interface)
                     quad.oy = (pos.y + dy) / quad.h
 
                     if snap_to_grid then
-                        print("snap")
                         -- Round ox and oy to nearest 0.25
                         quad.ox = 0.25 * math.floor(quad.ox / 0.25 + 0.5)
                         quad.oy = 0.25 * math.floor(quad.oy / 0.25 + 0.5)
@@ -984,6 +981,7 @@ function QuadtasticLogic.transitions(interface)
 
         -- expect this function to fail! Wrap it in a pcall!
         export_with = function(app, data, path, exporter)
+            data.quads.animations = data.animations
             QuadExport.export(data.quads, exporter, path)
         end,
 
@@ -1041,6 +1039,10 @@ function QuadtasticLogic.transitions(interface)
 
             if success then
                 data.quads, data.quadpath = unpack(more)
+                data.animations = data.quads.animations or {}
+                if(data.quads.animations) then
+                    data.quads.animations = nil
+                end
                 -- Reset list of collapsed groups
                 data.collapsed_groups = {}
                 data.history = History()

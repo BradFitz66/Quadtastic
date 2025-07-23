@@ -646,6 +646,7 @@ Quadtastic.draw = function(app, state, gui_state)
                                 nil, state.hovered)
                             Layout.finish(gui_state, "-")
                             if (double_clicked) then
+                                print("Double clicked on animation:", double_clicked.index)
                                 app.quadtastic.rename_animation(state, double_clicked.index, nil)
                             end
                         end
@@ -680,8 +681,8 @@ Quadtastic.draw = function(app, state, gui_state)
                             if frame then
                                 local quad = frame.quad
                                 love.graphics.setColor(255, 255, 255, 255)
-                                local x = 96 / 2 - quad.w / 2
-                                local y = 96 / 2 - quad.h / 2
+                                local x = 96 / 2 - (quad.w*quad.ox) 
+                                local y = 96 / 2 - (quad.h*quad.oy) 
                                 love.graphics.draw(
                                     state.image,
                                     love.graphics.newQuad(
@@ -696,7 +697,9 @@ Quadtastic.draw = function(app, state, gui_state)
                                     y,
                                     0,
                                     1,
-                                    1
+                                    1,
+                                    quad.ox,
+                                    quad.oy
                                 )
                             end
                         end
@@ -718,6 +721,8 @@ Quadtastic.draw = function(app, state, gui_state)
                     do
                         Layout.start(gui_state, 128)
                         do
+                            local selected_anim = state.animation_list and state.animation_list.selected
+                            local displayed_frame = selected_anim and selected_anim.displayed_frame or 1
                             imgui.push_style(gui_state, "font", gui_state.style.small_font)
                             local pressed =
                                 Button.draw(
@@ -737,7 +742,7 @@ Quadtastic.draw = function(app, state, gui_state)
                                 nil,
                                 16,
                                 16,
-                                state.animation_window and state.animation_window.displayed_frame or 1,
+                                displayed_frame,
                                 { alignment_h = ":", alignment_v = "-" }
                             )
                             imgui.pop_style(gui_state, "font")

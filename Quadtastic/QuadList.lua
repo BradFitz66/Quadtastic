@@ -12,7 +12,7 @@ local QuadList = {}
 local function draw_elements(gui_state, state, elements, last_hovered, quad_bounds)
     local clicked_element, hovered_element, double_clicked_element
     for name, element in pairs(elements) do
-        if name ~= "_META" then
+        if name ~= "_META" and name ~= "animations" then
             local row_height = 16
             -- check if this quad will be visible, and only draw it if it is visible.
             local visible = gui_state.layout.next_y + row_height >= state.quad_scrollpane_state.y and
@@ -129,7 +129,6 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
             local w, h = gui_state.layout.adv_x, gui_state.layout.adv_y
             if not input_consumed and imgui.was_mouse_pressed(gui_state, x, y, w, h) then
                 clicked_element = element
-                print(clicked_element)
                 if gui_state.input.mouse.buttons[1].double_clicked then
                     double_clicked_element = element
                 end

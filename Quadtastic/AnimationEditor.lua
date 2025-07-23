@@ -53,17 +53,20 @@ local function draw_elements(gui_state, state, elements)
                 if (frame) then
                     local quad = frame.quad
                     love.graphics.setColor(255, 255, 255, 255)
+                    local x,y = quad.x, quad.y
+                    local w,h = quad.w, quad.h
+                    local ox, oy = quad.ox or 1, quad.oy or 1
                     love.graphics.draw(
                         state.image,
                         love.graphics.newQuad(
-                            quad.x,
-                            quad.y,
-                            quad.w,
-                            quad.h,
+                            x,
+                            y,
+                            w,
+                            h,
                             state.image:getWidth(),
                             state.image:getHeight()
                         ),
-                        nil,
+                        w,
                         gui_state.layout.next_y + 32,
                         0,
                         .5,

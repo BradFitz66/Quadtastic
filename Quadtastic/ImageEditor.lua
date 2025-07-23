@@ -12,7 +12,7 @@ local ImageEditor = {}
 
 local grid_mesh
 
-function ImageEditor.zoom(state, delta)
+function ImageEditor.zoom(state, delta, mx, my)
     -- Ignore zoom instructions if no image is loaded
     if not state.image then
         return
@@ -23,6 +23,17 @@ function ImageEditor.zoom(state, delta)
     end
     local cx, cy = Rectangle.center(state.scrollpane_state)
     cx, cy = cx / state.display.zoom, cy / state.display.zoom
+
+    --Get difference between mouse position and center of the image
+    local dx = mx - cx
+    local dy = my - cy
+
+    --Adjust the center of the image to the mouse position
+    --Draw line to visualize difference
+    -- love.graphics.setColor(255, 0, 0, 255)
+    -- love.graphics.line(cx, cy, mx, my)
+
+
     local new_zoom
     if state.display.zoom <= 1 then
         if delta > 0 then
@@ -37,6 +48,9 @@ function ImageEditor.zoom(state, delta)
     end
     state.display.zoom = math.max(1 / 32, math.min(12, new_zoom))
     cx, cy = cx * state.display.zoom, cy * state.display.zoom
+    -- cx = cx + (dx / 2)
+    -- cy = cy + (dy / 2)
+
     Scrollpane.set_focus(state.scrollpane_state, {
         x = cx,
         y = cy
@@ -137,11 +151,13 @@ local function show_quad(gui_state, state, quad, quadname)
             if(#state.selection:get_selection()<=1) then
                 local circle_x = quad.x + (quad.w * quad.ox)
                 local circle_y = quad.y + (quad.h * quad.oy)
-                
-                love.graphics.circle("fill", circle_x, circle_y, 2)
-                love.graphics.setColor(0, 0, 0)
-                love.graphics.circle("line", circle_x, circle_y, 2)
-                love.graphics.setColor(255, 255, 255)
+                love.graphics.draw(gui_state.style.stylesheet, gui_state.style.quads.tools.origin, circle_x - 3, circle_y - 3, 0, 1, 1)
+
+
+                -- love.graphics.circle("fill", circle_x, circle_y, 2)
+                -- love.graphics.setColor(0, 0, 0)
+                -- love.graphics.circle("line", circle_x, circle_y, 2)
+                -- love.graphics.setColor(255, 255, 255)
             end
         else
             -- Use a simple line to outline the quad
@@ -705,8 +721,8 @@ local function handle_input(app, gui_state, state, img_w, img_h)
     if gui_state.input and gui_state.input.mouse.wheel_dy and
         (imgui.is_key_pressed(gui_state, "lctrl") or imgui.is_key_pressed(gui_state, "lctrl")) then
         local dy = gui_state.input.mouse.wheel_dy
-        ImageEditor.zoom(state, dy)
-        -- Consume mousewheel movement
+        local mx,my = gui_state.transform:unproject(gui_state.input.mouse.x, gui_state.input.mouse.y)
+        ImageEditor.zoom(state, dy, mx, my)
         gui_state.input.mouse.wheel_dy = 0
     end
 end

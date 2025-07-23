@@ -58,7 +58,6 @@ local function export_quad(handle, quadtable)
   local formatted_string = string.format(
     "{x = %d, y = %d, w = %d, h = %d, ox = %f, oy = %f}",
     quadtable.x, quadtable.y, quadtable.w, quadtable.h, quadtable.ox, quadtable.oy)
-  print(formatted_string)
   handle(formatted_string)
 end
 

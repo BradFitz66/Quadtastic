@@ -41,15 +41,32 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
             -- Draw row background
             love.graphics.draw( -- top
                 gui_state.style.stylesheet, background_quads.top, gui_state.layout.next_x, gui_state.layout.next_y, 0,
-                gui_state.layout.max_w-8, 1)
+                gui_state.layout.max_w-24, 1)
             love.graphics.draw( -- center
                 gui_state.style.stylesheet, background_quads.center, gui_state.layout.next_x,
-                gui_state.layout.next_y + 2, 0, gui_state.layout.max_w-8, 12)
+                gui_state.layout.next_y + 2, 0, gui_state.layout.max_w-24, 12)
             love.graphics.draw( -- bottom
                 gui_state.style.stylesheet, background_quads.bottom, gui_state.layout.next_x,
-                gui_state.layout.next_y + 14, 0, gui_state.layout.max_w-8, 1)
+                gui_state.layout.next_y + 14, 0, gui_state.layout.max_w-24, 1)
 
-            
+
+            local delete_click = Button.draw(
+                gui_state,
+                gui_state.layout.next_x + gui_state.layout.max_w - 24,
+                gui_state.layout.next_y,
+                16,
+                16,
+                "",
+                gui_state.style.quads.buttons.delete,
+                { alignment_h = ":", alignment_v = ":", center_icon=true }
+            )
+            if delete_click then
+                if(state.animation_list.selected == element) then
+                    state.animation_list.selected = nil
+                end
+                elements[i] = nil
+                state.animation_list.last_action = "delete"
+            end
             Text.draw(gui_state, 8, nil, gui_state.layout.max_w, nil,
                 string.format("%s", tostring(name)))
         end
@@ -58,7 +75,7 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
         gui_state.layout.adv_y = row_height
 
         local x, y = gui_state.layout.next_x, gui_state.layout.next_y
-        local w, h = gui_state.layout.adv_x, gui_state.layout.adv_y
+        local w, h = gui_state.layout.adv_x-24, gui_state.layout.adv_y
         if not input_consumed and imgui.was_mouse_pressed(gui_state, x, y, w, h) then
             state.animation_list.selected = element
             if(state.animation_window) then
@@ -66,7 +83,6 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
             end
             if gui_state.input.mouse.buttons[1].double_clicked then
                 double_clicked_element = element
-                print("Double clicked on animation:", element.name)
             end
         end
         if(imgui.is_mouse_in_rect(gui_state,x,y,w,h)) then
@@ -119,20 +135,27 @@ AnimationList.draw = function(gui_state, state, x, y, w, h, last_hovered)
                 if state.image then
                     local animation_count = dictionary_length(state.animations)
                     clicked, hovered, double_clicked = draw_elements(gui_state, state, state.animations, last_hovered,quad_bounds)
-                    local clicked,hovered, double_clicked = Button.draw(gui_state,animation_count>0 and 0 or -96,animation_count*16,12,12,"+")
+                    local clicked,hovered, double_clicked = Button.draw(
+                        gui_state,
+                        animation_count>0 and 0 or -96,
+                        animation_count*16,
+                        12,
+                        12,
+                        "+"
+                    )
                     if(clicked) then
                         local name = "New Animation " .. (dictionary_length(state.animations) + 1)
-                        state.animations[animation_count] = {
+                        state.animations[animation_count+1] = {
                             name = name,
                             frames = {},
                             frames_compact = {}, --Same as frame, but without any empty frames
                             duration = 1,
                             displayed_frame = 1,
                             loop = true,
-                            index = animation_count,
+                            index = animation_count+1,
                         }
                         if(animation_count == 0) then
-                            state.animation_list.selected = state.animations[animation_count]
+                            state.animation_list.selected = state.animations[animation_count+1]
                         end
                     end
                 end
