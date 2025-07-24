@@ -64,9 +64,10 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
                 if(state.animation_list.selected == element) then
                     state.animation_list.selected = nil
                 end
+                print(elements[i].name)
                 elements[i] = nil
                 state.animation_list.last_action = "delete"
-            end
+            end 
             Text.draw(gui_state, 8, nil, gui_state.layout.max_w, nil,
                 string.format("%s", tostring(name)))
         end
@@ -144,17 +145,18 @@ AnimationList.draw = function(gui_state, state, x, y, w, h, last_hovered)
                         "+"
                     )
                     if(clicked) then
-                        local name = "New Animation " .. (dictionary_length(state.animations) + 1)
-                        state.animations[animation_count+1] = {
+                        local name = "New Animation " .. (#state.animations + 1)
+                        table.insert(state.animations, {
                             name = name,
                             frames = {},
                             frames_compact = {}, --Same as frame, but without any empty frames
                             duration = 1,
                             displayed_frame = 1,
                             loop = true,
-                            index = animation_count+1,
-                        }
-                        if(animation_count == 0) then
+                            index = animation_count+1, 
+                        })
+                        print(#state.animations)
+                        if(#state.animations == 0) then
                             state.animation_list.selected = state.animations[animation_count+1]
                         end
                     end

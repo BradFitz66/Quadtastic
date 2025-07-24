@@ -55,7 +55,7 @@ local function draw_elements(gui_state, state, elements)
                     love.graphics.setColor(255, 255, 255, 255)
                     local x,y = quad.x, quad.y
                     local w,h = quad.w, quad.h
-                    local ox, oy = quad.ox or 1, quad.oy or 1
+                    local ox, oy = quad.ox, quad.oy 
                     love.graphics.draw(
                         state.image,
                         love.graphics.newQuad(
@@ -66,11 +66,15 @@ local function draw_elements(gui_state, state, elements)
                             state.image:getWidth(),
                             state.image:getHeight()
                         ),
-                        w,
-                        gui_state.layout.next_y + 32,
+                        24 - (w*ox),
+                        40 - ((h/2)*oy),
                         0,
                         .5,
-                        .5
+                        .5,
+                        0,
+                        oy,
+                        0,
+                        0
                     )
                     frame.duration = Inputfield.draw(gui_state,0, 54, nil, nil, tostring(frame.duration),{filter = function(c)
                         return c:match("%d")
@@ -101,7 +105,7 @@ local function draw_elements(gui_state, state, elements)
                             else
                                 state.animation_list.selected.frames[i] = {
                                     quad = state.selection:get_selection()[1],
-                                    duration = 1,
+                                    duration = 16,
                                 }
                             end
                             state.animation_list.selected.frames_compact = tableplus.compact(state.animation_list.selected.frames)
@@ -200,7 +204,7 @@ AnimationEditor.draw = function(gui_state, state, x, y, w, h)
             if(selected_animation.displayed_frame > #frames) then
                 selected_animation.displayed_frame = 1
             end
-            local duration = frames[selected_animation.displayed_frame].duration/1000
+            local duration = frames[selected_animation.displayed_frame].duration ~= "" and  frames[selected_animation.displayed_frame].duration/1000 or 16
             local len = dict_length(frames)
             state.animation_window.timer = state.animation_window.timer + love.timer.getDelta()
             if(state.animation_window.timer >= duration) then

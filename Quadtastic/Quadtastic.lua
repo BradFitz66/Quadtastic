@@ -719,15 +719,15 @@ Quadtastic.draw = function(app, state, gui_state)
                     end
                     Layout.next(gui_state, "-")
                     do
-                        Layout.start(gui_state, 128)
+                        Layout.start(gui_state,384, nil, 96, 32)
                         do
                             local selected_anim = state.animation_list and state.animation_list.selected
                             local displayed_frame = selected_anim and selected_anim.displayed_frame or 1
                             imgui.push_style(gui_state, "font", gui_state.style.small_font)
-                            local pressed =
+                            local pressed_play =
                                 Button.draw(
                                     gui_state,
-                                    nil,
+                                    32,
                                     nil,
                                     16,
                                     16,
@@ -736,18 +736,55 @@ Quadtastic.draw = function(app, state, gui_state)
                                     gui_state.style.quads.rowbackground.collapsed.hovered,
                                     { pressed = state.playing_anim, center_icon = true, disabled = state.image == nil }
                                 )
+                            local pressed_nextframe =
+                                Button.draw(
+                                    gui_state,
+                                    48,
+                                    nil,
+                                    16,
+                                    16,
+                                    "",
+                                    gui_state.style.quads.menu.nextframe,
+                                    { center_icon = true, disabled = state.image == nil }
+                                )
+                            local pressed_prevframe =
+                                Button.draw(
+                                    gui_state,
+                                    16,
+                                    nil,
+                                    16,
+                                    16,
+                                    "",
+                                    gui_state.style.quads.menu.prevframe,
+                                    { center_icon = true, disabled = state.image == nil }
+                                )
+
                             Label.draw(
                                 gui_state,
-                                24,
-                                nil,
+                                32,
+                                16,
                                 16,
                                 16,
                                 displayed_frame,
                                 { alignment_h = ":", alignment_v = "-" }
                             )
                             imgui.pop_style(gui_state, "font")
-                            if pressed then
+                            if pressed_play then
                                 state.playing_anim = not state.playing_anim
+                            end
+                            if pressed_nextframe then
+                                state.playing_anim = false
+                                if state.animation_list and state.animation_list.selected then
+                                    local anim = state.animation_list.selected
+                                    anim.displayed_frame = math.min(anim.displayed_frame + 1, #anim.frames)
+                                end
+                            end
+                            if pressed_prevframe then
+                                state.playing_anim = false
+                                if state.animation_list and state.animation_list.selected then
+                                    local anim = state.animation_list.selected
+                                    anim.displayed_frame = math.max(anim.displayed_frame - 1, 1)
+                                end
                             end
                         end
                     end

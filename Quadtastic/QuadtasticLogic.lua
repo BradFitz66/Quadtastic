@@ -10,6 +10,7 @@ local os = require(current_folder .. ".os")
 local S = require(current_folder .. ".strings")
 local Recent = require(current_folder .. "Recent")
 local Grid = require(current_folder .. "Grid")
+local inspect = require(current_folder .. "lib.inspect")
 
 -- Shared library
 local lfs = require("lfs")
@@ -171,7 +172,11 @@ function QuadtasticLogic.transitions(interface)
                         goto rename_start -- goto is ugly, but recalling this function instead from inside itself is weird and causes errors
                     end
                 end
-                state.animations[animation_index].name = new_key~= "" and new_key or "New Animation " .. (animation_index)
+                if(state.animations[animation_index]) then
+                    state.animations[animation_index].name = new_key
+                else
+                    print("Animation was with index " .. animation_index .. " not found")
+                end
             end
         end,
 
@@ -868,8 +873,8 @@ function QuadtasticLogic.transitions(interface)
             if not data.quadpath or data.quadpath == "" then
                 app.quadtastic.save_as(callback)
             else
-                local success, err = pcall(app.quadtastic.export_with,
-                    data.quadpath, common.exporter_table)
+                print(inspect(common.exporter_table))
+                local success, err = pcall(app.quadtastic.export_with, data.quadpath, common.exporter_table)
                 if success then
                     data.history:mark()
                     if callback then callback(data.quadpath) end
@@ -936,7 +941,7 @@ function QuadtasticLogic.transitions(interface)
                         return
                     end
                 end
-
+                
                 local success, err = pcall(app.quadtastic.export_with, path, exporter)
                 if success then
                     if callback then callback(path) end
@@ -978,11 +983,9 @@ function QuadtasticLogic.transitions(interface)
                 app.quadtastic.repeat_export(callback)
             end
         end,
-
         -- expect this function to fail! Wrap it in a pcall!
         export_with = function(app, data, path, exporter)
-            data.quads.animations = data.animations
-            QuadExport.export(data.quads, exporter, path)
+            QuadExport.export({quads=data.quads,animations=data.animations}, exporter, path)
         end,
 
         choose_quad = function(app, data, basepath)
@@ -1036,12 +1039,19 @@ function QuadtasticLogic.transitions(interface)
                     return { quads, quadpath }
                 end
             end)
-
             if success then
-                data.quads, data.quadpath = unpack(more)
-                data.animations = data.quads.animations or {}
-                if(data.quads.animations) then
-                    data.quads.animations = nil
+                local save_data, path = unpack(more)
+                local new_saveformat = save_data["quads"]~=nil and save_data["animations"]~=nil
+                print(new_saveformat)
+                if(new_saveformat) then
+                    data.quads, data.quadpath = save_data.quads, path
+                    data.animations = save_data.animations or {}
+                else
+                    --[[
+                        Old save format before animations were introduced.
+                    ]]
+                    data.quads,data.quadpath = save_data, path
+                    data.animations = {}
                 end
                 -- Reset list of collapsed groups
                 data.collapsed_groups = {}
