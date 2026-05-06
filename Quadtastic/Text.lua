@@ -65,6 +65,7 @@ function Text.break_at(state, text, width)
   return lines
 end
 
+
 Text.draw = function(state, x, y, w, h, text, options)
   text = utf8_encode(text)
   x = x or state.layout.next_x

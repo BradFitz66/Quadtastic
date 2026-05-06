@@ -80,7 +80,8 @@ return {
     tr = {x = 110, y = 32, w = 2, h = 2},
 	pause = {x = 25, y = 41, w = 5, h = 5},
 	nextframe = {x=24,y=33,w=7,h=7},
-	prevframe = {x=121,y=32,w=7,h=7}
+	prevframe = {x=121,y=32,w=7,h=7},
+	duplicate = {x=80, y=80, w=16,h=16}
   },
   menu_checkbox = {
     checked = {x = 73, y = 81, w = 7, h = 7},

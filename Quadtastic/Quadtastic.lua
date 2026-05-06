@@ -646,8 +646,7 @@ Quadtastic.draw = function(app, state, gui_state)
                                 nil, state.hovered)
                             Layout.finish(gui_state, "-")
                             if (double_clicked) then
-                                print("Double clicked on animation:", double_clicked.index)
-                                app.quadtastic.rename_animation(state, double_clicked.index, nil)
+                                app.quadtastic.rename_animation(state, double_clicked, nil)
                             end
                         end
                     end
@@ -681,8 +680,10 @@ Quadtastic.draw = function(app, state, gui_state)
                             if frame then
                                 local quad = frame.quad
                                 love.graphics.setColor(255, 255, 255, 255)
-                                local x = 96 / 2 - (quad.w*quad.ox) 
-                                local y = 96 / 2 - (quad.h*quad.oy) 
+                                local offsetW = anim.flipX and -quad.w*quad.ox or quad.w*quad.ox
+                                local offsetH = anim.flipY and -quad.h*quad.oy or quad.h*quad.oy
+                                local x = 96 / 2
+                                local y = 96 / 2
                                 love.graphics.draw(
                                     state.image,
                                     love.graphics.newQuad(
@@ -696,10 +697,10 @@ Quadtastic.draw = function(app, state, gui_state)
                                     x,
                                     y,
                                     0,
-                                    1,
-                                    1,
-                                    quad.ox,
-                                    quad.oy
+                                    anim.flipX and -1 or 1,
+                                    anim.flipY and -1 or 1,
+                                    offsetW,
+                                    offsetH
                                 )
                             end
                         end
@@ -719,7 +720,7 @@ Quadtastic.draw = function(app, state, gui_state)
                     end
                     Layout.next(gui_state, "-")
                     do
-                        Layout.start(gui_state,384, nil, 96, 32)
+                        Layout.start(gui_state,384, nil, 512, 64)
                         do
                             local selected_anim = state.animation_list and state.animation_list.selected
                             local displayed_frame = selected_anim and selected_anim.displayed_frame or 1
@@ -758,6 +759,19 @@ Quadtastic.draw = function(app, state, gui_state)
                                     gui_state.style.quads.menu.prevframe,
                                     { center_icon = true, disabled = state.image == nil }
                                 )
+                            if(selected_anim~=nil) then
+                                if(selected_anim.flipX==nil or selected_anim.flipY==nil) then
+                                    selected_anim.flipX = false
+                                    selected_anim.flipY = false
+                                end
+                                Label.draw(gui_state, 66, gui_state.layout.next_y-4, 32, 16, "Flip X:")
+                                selected_anim.flipX = Checkbox.draw(gui_state,90,gui_state.layout.next_y-4,16,16,selected_anim.flipX)
+                                Label.draw(gui_state, 66, gui_state.layout.next_y+8, 32, 16, "Flip Y:")
+                                selected_anim.flipY = Checkbox.draw(gui_state,90,gui_state.layout.next_y+8,16,16,selected_anim.flipY)
+                                Label.draw(gui_state, 104, gui_state.layout.next_y+8, 32, 16, "Loop:")
+                                selected_anim.loop = Checkbox.draw(gui_state,120,gui_state.layout.next_y+9,16,16,selected_anim.loop)
+
+                            end
 
                             Label.draw(
                                 gui_state,
@@ -770,6 +784,10 @@ Quadtastic.draw = function(app, state, gui_state)
                             )
                             imgui.pop_style(gui_state, "font")
                             if pressed_play then
+                                state.animation_list.selected.displayed_frame = 
+                                            state.animation_list.selected.displayed_frame == #state.animation_list.selected.frames 
+                                            and 1 
+                                            or state.animation_list.selected.displayed_frame
                                 state.playing_anim = not state.playing_anim
                             end
                             if pressed_nextframe then

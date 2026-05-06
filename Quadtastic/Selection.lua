@@ -74,7 +74,7 @@ Selection.sorted_selection_rowmajor = function(self)
     -- Loop through selection and get rows by finding quads with the same y value or within a certain threshold
     for _, v in ipairs(self:get_selection()) do
         local row = {}
-        for _, v2 in ipairs(self:get_selection()) do
+        for _, v2 in ipairs(self:get_selection()) do 
             if math.abs(v.y - v2.y) < row_threshold then
                 table.insert(row, v2)
             end

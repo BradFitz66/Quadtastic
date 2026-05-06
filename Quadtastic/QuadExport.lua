@@ -7,9 +7,7 @@ local QuadExport = {}
 
 QuadExport.export = function(exporting, exporter, filepath)
   --Save the filepath to the love2D save directory
-  print(filepath)
   local success, message = love.filesystem.write("filepath.txt", filepath)
-  print(inspect(exporting))
   assert(exporting.quads and type(exporting.quads) == "table")
   assert(exporter and type(exporter) == "table", tostring(type(exporter)))
   assert(exporter.export and type(exporter.export) == "function")

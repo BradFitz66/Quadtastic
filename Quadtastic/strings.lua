@@ -149,6 +149,8 @@ strings.tooltips = {
   sort = "Sort unnamed quads from top to bottom, left to right",
   group = "Form new group from selected quads (" .. Keybindings.to_string("group") .. ")",
   ungroup = "Break up selected group(s) (" .. Keybindings.to_string("ungroup") .. ")",
+
+  delete_animation = "Delete this animation"
 }
 
 strings.image_editor_no_image = s[[no image :(

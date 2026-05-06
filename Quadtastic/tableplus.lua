@@ -22,6 +22,14 @@ function tableplus.get(tab, key, ...)
   end
 end
 
+function tableplus.copy (t)
+    local res = {}
+    for k,v in pairs(t) do
+        res[k] = v
+    end
+    return res
+end
+
 -- Sets table[key][...] to value
 -- That is, _set(t, v, k1, k2, k3) is another way to write t[k1][k2][k3] = v
 -- but there is no built-in way in Lua to do this in an automated way

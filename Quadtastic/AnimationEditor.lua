@@ -7,7 +7,6 @@ local Inputfield = require(current_folder .. ".Inputfield")
 local Button = require(current_folder .. ".Button")
 local Tooltip = require(current_folder .. ".Tooltip")
 local tableplus = require(current_folder .. ".tableplus")
-print(current_folder)
 local inspect = require("lib.inspect")
 local AnimationEditor = {}
 
@@ -49,6 +48,7 @@ local function draw_elements(gui_state, state, elements)
             )
             
             local frame = selected_animation and selected_animation.frames[i] or nil
+            local compact_frame = selected_animation and selected_animation.frames_compact[i] or nil
             if(selected_animation~=nil) then
                 if (frame) then
                     local quad = frame.quad
@@ -76,9 +76,16 @@ local function draw_elements(gui_state, state, elements)
                         0,
                         0
                     )
-                    frame.duration = Inputfield.draw(gui_state,0, 54, nil, nil, tostring(frame.duration),{filter = function(c)
+                    local duration = Inputfield.draw(gui_state,0, 54, nil, nil, tostring(frame.duration),{filter = function(c)
                         return c:match("%d")
                     end})
+                    if duration ~= nil then
+                        frame.duration = tostring(duration)
+                        if(compact_frame) then
+                            compact_frame.duration = frame.duration
+                        end
+                    end
+
                     Tooltip.draw(
                         gui_state,
                         "Duration of frame " .. i .. " in milliseconds",
@@ -101,7 +108,6 @@ local function draw_elements(gui_state, state, elements)
                         if(state.animation_list.selected ~= nil) then
                             if frame then
                                 state.animation_list.selected.frames[i] = nil
-                                
                             else
                                 state.animation_list.selected.frames[i] = {
                                     quad = state.selection:get_selection()[1],
@@ -159,7 +165,6 @@ local function draw_elements(gui_state, state, elements)
     local in_x, in_y = mx >= quad.x and mx <= quad.x + quad.w,
                         my >= quad.y and my <= quad.y + quad.h
 
-    local m1_down = gui_state.input.mouse.buttons[1].pressed
     local m2_down = gui_state.input.mouse.buttons[2].pressed
 
     local old_mouse_x = gui_state.input.mouse.old_x
@@ -204,14 +209,21 @@ AnimationEditor.draw = function(gui_state, state, x, y, w, h)
             if(selected_animation.displayed_frame > #frames) then
                 selected_animation.displayed_frame = 1
             end
-            local duration = frames[selected_animation.displayed_frame].duration ~= "" and  frames[selected_animation.displayed_frame].duration/1000 or 16
+            local duration = frames[selected_animation.displayed_frame].duration ~= "" and  frames[selected_animation.displayed_frame].duration/1000 or 0.016
+            
             local len = dict_length(frames)
             state.animation_window.timer = state.animation_window.timer + love.timer.getDelta()
             if(state.animation_window.timer >= duration) then
                 selected_animation.displayed_frame = selected_animation.displayed_frame + 1
                 state.animation_window.timer = 0
                 if(selected_animation.displayed_frame > len) then
-                    selected_animation.displayed_frame = 1
+                    if(selected_animation.loop) then
+                        selected_animation.displayed_frame = 1
+                    else
+                        state.playing_anim = false
+                        selected_animation.displayed_frame = #frames
+                        return
+                    end
                 end
             end
         end

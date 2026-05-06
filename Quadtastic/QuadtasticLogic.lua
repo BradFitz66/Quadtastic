@@ -11,6 +11,7 @@ local S = require(current_folder .. ".strings")
 local Recent = require(current_folder .. "Recent")
 local Grid = require(current_folder .. "Grid")
 local inspect = require(current_folder .. "lib.inspect")
+local tableplus = require(current_folder .. ".tableplus")
 
 -- Shared library
 local lfs = require("lfs")
@@ -154,11 +155,11 @@ function QuadtasticLogic.transitions(interface)
             end
         end,
 
-        rename_animation = function(app,data,state, animation_index, filter_func)
+        rename_animation = function(app,data,state, animation, filter_func)
             local retry = false
             ::rename_start::
             local ret
-            local new_key = state.animations[animation_index] and state.animations[animation_index].name or "New animation"
+            local new_key = animation and animation.name or "New animation"
             local text = not retry and "Rename animation:" or "Name already taken\nRename animation:"
             ret, new_key = interface.query(text, new_key,
                 {
@@ -166,17 +167,13 @@ function QuadtasticLogic.transitions(interface)
                     enter = S.buttons.ok,
                 }, {filter=filter_func})
             if ret == "OK" then
-                for _, anim in pairs(state.animations) do
-                    if anim.name == new_key and anim.index ~= animation_index then
+                for i, anim in ipairs(state.animations) do
+                    if anim.name == new_key then
                         retry = true
                         goto rename_start -- goto is ugly, but recalling this function instead from inside itself is weird and causes errors
                     end
                 end
-                if(state.animations[animation_index]) then
-                    state.animations[animation_index].name = new_key
-                else
-                    print("Animation was with index " .. animation_index .. " not found")
-                end
+                animation.name = new_key
             end
         end,
 
@@ -1046,6 +1043,40 @@ function QuadtasticLogic.transitions(interface)
                 if(new_saveformat) then
                     data.quads, data.quadpath = save_data.quads, path
                     data.animations = save_data.animations or {}
+                    --Ensure the frames reference the quads
+                    for _, anim in pairs(data.animations) do
+                        for _, frame in pairs(anim.frames) do
+                            for i, quad_group in pairs(data.quads) do
+                                for _, quad in pairs(quad_group) do
+                                    local quad1 ={
+                                        x = quad.x,
+                                        y = quad.y,
+                                        w = quad.w,
+                                        h = quad.h,
+                                        ox = quad.ox or 0,
+                                        oy = quad.oy or 0
+                                    }
+                                    local quad2 = {
+                                        x = frame.quad.x,
+                                        y = frame.quad.y,
+                                        w = frame.quad.w,
+                                        h = frame.quad.h,
+                                        ox = frame.quad.ox or 0,
+                                        oy = frame.quad.oy or 0
+                                    }
+                                    --Round ox and oy to nearest 1 decimal
+                                    quad1.ox = math.floor(quad1.ox * 10 + 0.5) / 10
+                                    quad1.oy = math.floor(quad1.oy * 10 + 0.5) / 10
+                                    quad2.ox = math.floor(quad2.ox * 10 + 0.5) / 10
+                                    quad2.oy = math.floor(quad2.oy * 10 + 0.5) / 10
+                                    if(tableplus.equals(quad1, quad2,true)) then
+                                        frame.quad = quad
+                                        break
+                                    end
+                                end
+                            end
+                        end
+                    end
                 else
                     --[[
                         Old save format before animations were introduced.

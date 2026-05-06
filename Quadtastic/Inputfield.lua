@@ -311,6 +311,7 @@ Inputfield.draw = function(state, x, y, w, h, content, options)
       elseif not options then
         options={}
       end
+
       content, text_x = handle_input(state, x, y, w, h, content, text_x,  options.filter)
       if imgui.was_key_pressed(state, "return") then
         committed_content = content
