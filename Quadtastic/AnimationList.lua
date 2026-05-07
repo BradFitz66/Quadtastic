@@ -152,8 +152,6 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
             local mouse_down = (gui_state.input ~= nil and gui_state.input.mouse ~= nil) and
             gui_state.input.mouse.buttons[1].pressed or false
 
-            --Get target index and draw line to indicate where the element will be dropped
-            
             local target_index = nil
             for j, element in pairs(elements) do
                 local element_y = y + (j-1)*row_height
@@ -163,6 +161,7 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
                 end
             end
 
+            --draw line to indicate where the element will be dropped
             love.graphics.setColor(255, 255, 255, 128)  
             if target_index ~= nil then
                 local line_y = y + (target_index-1)*row_height

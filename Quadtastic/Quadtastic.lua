@@ -682,8 +682,8 @@ Quadtastic.draw = function(app, state, gui_state)
                                 love.graphics.setColor(255, 255, 255, 255)
                                 local offsetW = anim.flipX and -quad.w*quad.ox or quad.w*quad.ox
                                 local offsetH = anim.flipY and -quad.h*quad.oy or quad.h*quad.oy
-                                local x = 96 / 2
-                                local y = 96 / 2
+                                local x = (96 / 2) - offsetW
+                                local y = (96 / 2) - offsetH
                                 love.graphics.draw(
                                     state.image,
                                     love.graphics.newQuad(
@@ -699,8 +699,8 @@ Quadtastic.draw = function(app, state, gui_state)
                                     0,
                                     anim.flipX and -1 or 1,
                                     anim.flipY and -1 or 1,
-                                    offsetW,
-                                    offsetH
+                                    quad.ox,
+                                    quad.oy
                                 )
                             end
                         end
