@@ -48,34 +48,45 @@ local function draw_elements(gui_state, state, elements)
             )
             
             local frame = selected_animation and selected_animation.frames[i] or nil
+            local flipX = selected_animation and selected_animation.flipX or false
+            local flipY = selected_animation and selected_animation.flipY or false
             local compact_frame = selected_animation and selected_animation.frames_compact[i] or nil
             if(selected_animation~=nil) then
                 if (frame) then
                     local quad = frame.quad
                     love.graphics.setColor(255, 255, 255, 255)
-                    local x,y = quad.x, quad.y
-                    local w,h = quad.w, quad.h
+                    local qx,qy = quad.x, quad.y
+                    local qw,qh = quad.w, quad.h
                     local ox, oy = quad.ox, quad.oy 
+                    local absOx, absOy = quad.ox * qw, quad.oy * qh
+                    --Width of the frame column
+                    local w  = 32
+                    local h = 40
+                    
+                    local x = (w / 2) - (flipX and -absOx/2 or absOx/2)
+                    local y = (h / 2) - (flipY and -absOy/2 or absOy/2) + 24
+
                     love.graphics.draw(
                         state.image,
                         love.graphics.newQuad(
-                            x,
-                            y,
-                            w,
-                            h,
+                            qx,
+                            qy,
+                            qw,
+                            qh,
                             state.image:getWidth(),
                             state.image:getHeight()
                         ),
-                        24 - (w*ox),
-                        40 - ((h/2)*oy),
+                        x,
+                        y,
                         0,
-                        .5,
-                        .5,
-                        0,
+                        flipX and -.5 or .5,
+                        flipY and -.5 or .5,
+                        ox,
                         oy,
                         0,
                         0
                     )
+
                     local duration = Inputfield.draw(gui_state,0, 54, nil, nil, tostring(frame.duration),{filter = function(c)
                         return c:match("%d")
                     end})

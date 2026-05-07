@@ -15,6 +15,23 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
         state.animation_list = {}
         state.animation_list.last_action = nil
     end
+
+    local mouse_down = (gui_state.input ~= nil and gui_state.input.mouse ~= nil) and
+        gui_state.input.mouse.buttons[1].pressed or false
+
+    if mouse_down and state.animation_list.initial_click_x == nil then
+        state.animation_list.initial_click_x = gui_state.input.mouse.x
+        state.animation_list.initial_click_y = gui_state.input.mouse.y
+    elseif not mouse_down then
+        state.animation_list.initial_click_x = nil
+        state.animation_list.initial_click_y = nil
+        state.animation_list.drag_candidate = nil
+    end
+
+    local row_height = 16
+    local list_start_y = gui_state.layout.next_y
+    local list_start_x = gui_state.layout.next_x
+
     for i, element in pairs(elements) do
         local name = element.name or i
         local row_height = 16
@@ -102,94 +119,26 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
 
         gui_state.layout.adv_x = gui_state.layout.max_w
         gui_state.layout.adv_y = row_height
-        local mouse_down = (gui_state.input ~= nil and gui_state.input.mouse ~= nil) and
-        gui_state.input.mouse.buttons[1].pressed or false
-
-        if (mouse_down and state.animation_list.initial_click_x == nil) then
-            state.animation_list.initial_click_x = gui_state.input.mouse.x
-            state.animation_list.initial_click_y = gui_state.input.mouse.y
-        elseif (not mouse_down) then
-            state.animation_list.initial_click_x = nil
-            state.animation_list.initial_click_y = nil
-        end
-
         local x, y = gui_state.layout.next_x, gui_state.layout.next_y
         local w, h = gui_state.layout.adv_x-32, gui_state.layout.adv_y
         if not input_consumed and imgui.was_mouse_pressed(gui_state, x, y, w, h) then
             state.animation_list.selected = element
+            clicked_element = element
+            state.animation_list.drag_candidate = element
             if(state.animation_window) then
                 state.animation_window.displayed_frame = 1
             end
-            if gui_state.input.mouse.buttons[1].double_clicked then
+            if gui_state.input.mouse.buttons[1].double_clicked and state.animation_list.last_clicked_element == element then
                 double_clicked_element = element
             end
+            state.animation_list.last_clicked_element = element
         end
-        if imgui.is_mouse_in_rect(gui_state,x,y,w,h) and state.animation_list.dragging_element == nil then
-            if mouse_down and state.animation_list.selected == element then
-                local old_mouse_x = state.animation_list.initial_click_x
-                local old_mouse_y = state.animation_list.initial_click_y
-                local new_mouse_x = gui_state.input.mouse.x
-                local new_mouse_y = gui_state.input.mouse.y
-
-                local dx = new_mouse_x - old_mouse_x
-                local dy = new_mouse_y - old_mouse_y
-                print("Mouse moved: " .. tostring(dx) .. ", " .. tostring(dy))
-                if dx > 5 or dy > 5 then
-                    state.animation_list.dragging_element = element
-                    print("Started dragging " .. tostring(element.name))
-                end
-            end
-        end
-
-
-        if state.animation_list.dragging_element ~= nil and  (gui_state.input ~= nil and gui_state.input.mouse ~= nil) then
-            print("Dragging " .. tostring(state.animation_list.dragging_element.name))
-            --Draw a rectangle following the mouse cursor to indicate the dragged element
-            local mx, my = gui_state.transform:unproject(gui_state.input.mouse.x,gui_state.input.mouse.y)
-            love.graphics.setColor(255, 255, 255, 128)
-            love.graphics.rectangle("fill", mx,my, 50, 16)
-
-            local mouse_down = (gui_state.input ~= nil and gui_state.input.mouse ~= nil) and
-            gui_state.input.mouse.buttons[1].pressed or false
-
-            local target_index = nil
-            for j, element in pairs(elements) do
-                local element_y = y + (j-1)*row_height
-                if my >= element_y and my < element_y + row_height then
-                    target_index = j
-                    break
-                end
-            end
-
-            --draw line to indicate where the element will be dropped
-            love.graphics.setColor(255, 255, 255, 128)  
-            if target_index ~= nil then
-                local line_y = y + (target_index-1)*row_height
-                --Determine if we will place the element before or after the target element based on the mouse position
-                if my > line_y + row_height/2 then
-                    line_y = line_y + row_height
-                    target_index = target_index + 1
-                end
-
-                love.graphics.rectangle("fill", x, line_y, w, 2)
-            end
-
-            if(not mouse_down) then
-                print("Dropped on index " .. tostring(target_index))
-                if target_index ~= nil then
-                    local dragging_index = nil
-                    for j, element in pairs(elements) do
-                        if element == state.animation_list.dragging_element then
-                            dragging_index = j
-                            break
-                        end
-                    end
-                    if dragging_index ~= nil and target_index ~= dragging_index then
-                        table.insert(elements, target_index, table.remove(elements, dragging_index))
-                    end
-                end
-
-                state.animation_list.dragging_element = nil
+        if state.animation_list.drag_candidate == element and state.animation_list.dragging_element == nil and mouse_down then
+            local dx = gui_state.input.mouse.x - (state.animation_list.initial_click_x or gui_state.input.mouse.x)
+            local dy = gui_state.input.mouse.y - (state.animation_list.initial_click_y or gui_state.input.mouse.y)
+            if math.abs(dx) > 5 or math.abs(dy) > 5 then
+                state.animation_list.dragging_element = element
+                state.animation_list.drag_candidate = nil
             end
         end
 
@@ -210,6 +159,55 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
         Layout.next(gui_state, "|")
     end
     --Add a + button to add a new animation
+
+    -- Drag rendering and drop logic (runs once per frame, outside element loop)
+    if state.animation_list.dragging_element ~= nil and gui_state.input ~= nil and gui_state.input.mouse ~= nil then
+        local mx, my = gui_state.transform:unproject(gui_state.input.mouse.x, gui_state.input.mouse.y)
+        local list_w = gui_state.layout.max_w - 32
+
+        -- Draw ghost rectangle following the cursor
+        love.graphics.setColor(255, 255, 255, 128)
+        love.graphics.rectangle("fill", mx, my, 50, row_height)
+
+        -- Find target insertion index and line position based on mouse y
+        local n = #elements
+        local target_index = n + 1
+        local line_y = list_start_y + n * row_height
+        for j = 1, n do
+            if elements[j] ~= nil then
+                local element_top = list_start_y + (j - 1) * row_height
+                if my < element_top + row_height then
+                    if my < element_top + row_height / 2 then
+                        target_index = j
+                        line_y = element_top
+                    else
+                        target_index = j + 1
+                        line_y = element_top + row_height
+                    end
+                    break
+                end
+            end
+        end
+
+        -- Draw indicator line
+        love.graphics.setColor(255, 255, 255, 200)
+        love.graphics.rectangle("fill", list_start_x, line_y, list_w, 2)
+
+        -- On mouse release, perform the reorder
+        if not mouse_down then
+            local dragging_index = nil
+            for j = 1, n do
+                if elements[j] == state.animation_list.dragging_element then
+                    dragging_index = j
+                    break
+                end
+            end
+            if dragging_index ~= nil and target_index ~= dragging_index and target_index ~= dragging_index + 1 then
+                table.insert(elements, target_index, table.remove(elements, dragging_index))
+            end
+            state.animation_list.dragging_element = nil
+        end
+    end
 
     return clicked_element, hovered_element, double_clicked_element
 end
