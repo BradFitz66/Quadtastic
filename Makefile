@@ -1,11 +1,20 @@
-TESTS := $(shell find tests -type f -name "test_*.lua")
+SHELL := /bin/sh
+.SHELLFLAGS := -ec
+.DELETE_ON_ERROR:
+
+TESTS := $(wildcard tests/test_*.lua)
+aseprite ?= aseprite
+REBUILD_ASSETS ?= 0
+asset_source = $(if $(filter 1,$(REBUILD_ASSETS)),$(1))
+LOVE_VERSION ?= 0.10.2
+LOVE_DOWNLOAD_URL ?= https://github.com/love2d/love/releases/download/$(LOVE_VERSION)
 
 APPNAME = Quadtastic
 APPIDENTIFIER = com.25a0.quadtastic
-APPVERSION = $(shell git describe --tags)
+APPVERSION ?= $(shell git describe --tags --always 2>/dev/null || printf 'dev')
 APPCOPYRIGHT = 2017-2018 Moritz Neikes
-macos-love-distname = love-0.10.2-macosx-x64
-windows-love-distname = love-0.10.2-win32
+macos-love-distname = love-$(LOVE_VERSION)-macosx-x64
+windows-love-distname = love-$(LOVE_VERSION)-win32
 
 # When changing these edition identifiers, remember to change them in strings.lua
 EDITION_WINDOWS = windows
@@ -13,7 +22,7 @@ EDITION_MACOS = osx
 EDITION_CROSSPLATFORM = love
 EDITION_LIBQUADTASTIC = libquadtastic
 
-.PHONY: clean test check tests/* run all distfiles app_resources run_debug release* publish
+.PHONY: clean test check run all distfiles app_resources run_debug windows macos linux crossplatform $(TESTS)
 
 all: run_debug
 
@@ -24,8 +33,12 @@ run_debug: DEBUG=DEBUG=true
 run_debug: run
 
 LICENSES = LICENSE.txt ${APPNAME}/res/copyright.txt ${APPNAME}/libquadtastic.lua
+SHARED_FILES := $(shell find shared -type f | sed 's/ /\\ /g')
 
 APP_RESOURCES = ${LICENSES} \
+				${APPNAME}/res/m5x7.ttf \
+				${APPNAME}/res/m3x6.ttf \
+				${APPNAME}/res/loading.png \
                 ${APPNAME}/res/style.png \
                 ${APPNAME}/res/icon-32x32.png \
                 ${APPNAME}/res/turboworkflow-deactivated.png \
@@ -34,84 +47,76 @@ APP_RESOURCES = ${LICENSES} \
 
 app_resources: ${APP_RESOURCES}
 
-check: ${APPNAME}/*.lua
-	@which luacheck 1>/dev/null || (echo \
-		"Luacheck (https://github.com/mpeterv/luacheck/) is required to run the static analysis checks" \
-		&& false )
-	luacheck -q ${APPNAME}/*.lua
-
-test: check ${TESTS}
-
-DISTFILES = dist/releases/${APPVERSION}/macos/${APPNAME}.app \
-            dist/releases/${APPVERSION}/windows/${APPNAME}.zip \
+DISTFILES = dist/releases/${APPVERSION}/windows/${APPNAME}.zip \
+			dist/releases/${APPVERSION}/macos/${APPNAME}.zip \
+			dist/releases/${APPVERSION}/linux/${APPNAME}.tar.gz \
             dist/releases/${APPVERSION}/crossplatform/${APPNAME}.zip \
             dist/releases/${APPVERSION}/love/${APPNAME}.love \
             dist/releases/${APPVERSION}/libquadtastic/libquadtastic.lua
 
 distfiles: ${DISTFILES}
 
-dist/releases/${APPVERSION}/macos/${APPNAME}.app: dist/macos/${APPNAME}.app
-	mkdir -p dist/releases/${APPVERSION}/macos
-	cp -r dist/macos/${APPNAME}.app dist/releases/${APPVERSION}/macos/
-	# Update directory timestamp explicitly
-	touch $@
+windows: dist/releases/${APPVERSION}/windows/${APPNAME}.zip
+macos: dist/releases/${APPVERSION}/macos/${APPNAME}.zip
+linux: dist/releases/${APPVERSION}/linux/${APPNAME}.tar.gz
+crossplatform: dist/releases/${APPVERSION}/crossplatform/${APPNAME}.zip
+
+dist/releases/${APPVERSION}/macos/${APPNAME}.zip: dist/macos/${APPNAME}.zip
+	mkdir -p "$(@D)"
+	cp "$<" "$@"
+
+dist/releases/${APPVERSION}/linux/${APPNAME}.tar.gz: dist/${APPNAME}.love Makefile
+	rm -rf dist/linux/${APPNAME}
+	mkdir -p dist/linux/${APPNAME} "$(@D)"
+	cp dist/${APPNAME}.love LICENSE.txt dist/linux/${APPNAME}/
+	printf '%s\n' '#!/bin/sh' 'cd "$$(dirname "$$0")" || exit 1' 'exec love ./$(APPNAME).love "$$@"' > dist/linux/${APPNAME}/${APPNAME}
+	chmod +x dist/linux/${APPNAME}/${APPNAME}
+	printf '%s\n' 'Requires LOVE $(LOVE_VERSION) and LuaFileSystem for Lua 5.1 installed by your distribution.' 'Run ./$(APPNAME) to start. This archive does not bundle a Linux runtime.' > dist/linux/${APPNAME}/README.txt
+	tar -czf "$@" -C dist/linux ${APPNAME}
 
 dist/releases/${APPVERSION}/windows/${APPNAME}.zip: dist/windows/${APPNAME}.zip
 	mkdir -p dist/releases/${APPVERSION}/windows
 	cp dist/windows/${APPNAME}.zip dist/releases/${APPVERSION}/windows/
 
-dist/releases/${APPVERSION}/crossplatform/${APPNAME}.zip: dist/${APPNAME}.love
+dist/releases/${APPVERSION}/crossplatform/${APPNAME}.zip: dist/${APPNAME}.love $(SHARED_FILES) Makefile
 	mkdir -p dist/releases/${APPVERSION}/crossplatform
-	cp dist/${APPNAME}.love dist/releases/${APPVERSION}/crossplatform/
-	cp -r dist/shared dist/releases/${APPVERSION}/crossplatform/
+	rm -rf dist/crossplatform
+	mkdir -p dist/crossplatform
+	cp dist/${APPNAME}.love LICENSE.txt dist/crossplatform/
+	cp -R shared dist/crossplatform/
+	rm -f "$@"
+	cd dist/crossplatform; zip -q -r -0 ../releases/${APPVERSION}/crossplatform/${APPNAME}.zip .
 
-	cd dist/releases/${APPVERSION}/crossplatform;\
-	zip ${APPNAME}.zip -Z store -m -r .
-
-dist/releases/${APPVERSION}/love/${APPNAME}.love: dist/${APPNAME}.love
+dist/releases/${APPVERSION}/love/${APPNAME}.love: dist/${APPNAME}.love $(SHARED_FILES) Makefile
 	mkdir -p dist/releases/${APPVERSION}/love
 	cp dist/${APPNAME}.love dist/releases/${APPVERSION}/love/
+	mkdir -p dist/releases/${APPVERSION}/love/shared
+	cp -R shared/. dist/releases/${APPVERSION}/love/shared/
 
 dist/releases/${APPVERSION}/libquadtastic/libquadtastic.lua: Quadtastic/libquadtastic.lua
 	mkdir -p dist/releases/${APPVERSION}/libquadtastic
 	cp Quadtastic/libquadtastic.lua dist/releases/${APPVERSION}/libquadtastic/
 
-dist/${APPNAME}.love: ${APPNAME}/**/*.lua ${APPNAME}/*.lua ${APP_RESOURCES}
-	echo ${EDITION_CROSSPLATFORM} > ${APPNAME}/res/edition.txt
-	cd ${APPNAME}; zip ../dist/${APPNAME}.love -Z store -FS -r . -x .\*
-	cp -R shared dist/
+APP_SOURCES := $(shell find ${APPNAME} -type f ! -path '*/.*' ! -name version.txt ! -name edition.txt)
 
-dist/macos/${APPNAME}.app: dist/res/love.app dist/${APPNAME}.love dist/res/icon.icns
-	mkdir -p dist/macos
-	mkdir -p dist/macos/${APPNAME}.app
-	rsync -qat dist/res/love.app/ dist/macos/${APPNAME}.app/
-	cp dist/${APPNAME}.love dist/macos/
+.PHONY: dist_shared
+dist_shared:
+	mkdir -p dist/shared
+	cp -R shared/. dist/shared/
 
-	# Update edition in this version of the .love archive
-	mkdir -p dist/macos/res
-	echo ${EDITION_MACOS} > dist/macos/res/edition.txt
-	cd dist/macos; zip ${APPNAME}.love -Z store res/edition.txt
-	rm dist/macos/res/edition.txt
-	rm -d dist/macos/res
+dist/${APPNAME}.love: ${APP_SOURCES} ${APP_RESOURCES} Makefile | dist_shared
+	mkdir -p dist
+	rm -rf dist/love
+	cp -R ${APPNAME} dist/love
+	printf '%s\n' ${EDITION_CROSSPLATFORM} > dist/love/res/edition.txt
+	rm -f "$@"
+	cd dist/love; zip -q -r -0 ../${APPNAME}.love . -x '.*' '*/.*'
 
-	mv dist/macos/${APPNAME}.love dist/macos/${APPNAME}.app/Contents/Resources/
-	cp -R dist/shared dist/macos/${APPNAME}.app/Contents/Resources/
-	cp dist/res/icon.icns dist/macos/${APPNAME}.app/Contents/Resources/
-
-	cp res/plist.patch dist/macos/
-	sed -i -e 's/__APPIDENTIFIER/${APPIDENTIFIER}/g' dist/macos/plist.patch
-	sed -i -e 's/__APPNAME/${APPNAME}/g' dist/macos/plist.patch
-	sed -i -e 's/__APPVERSION/${APPVERSION}/g' dist/macos/plist.patch
-	sed -i -e 's/__APPCOPYRIGHT/${APPCOPYRIGHT}/g' dist/macos/plist.patch
-	patch dist/macos/${APPNAME}.app/Contents/Info.plist dist/macos/plist.patch
-	rm dist/macos/plist.patch*
-
-	# Update directory timestamp explicitly
-	touch $@
-
-dist/windows/${APPNAME}.zip: dist/res/${windows-love-distname}.zip dist/${APPNAME}.love
+dist/windows/${APPNAME}.zip: dist/res/${windows-love-distname}.zip dist/${APPNAME}.love shared/Windows/lfs.dll Makefile
+	rm -rf dist/windows/${APPNAME} dist/windows/runtime
 	mkdir -p dist/windows/${APPNAME}
-	rsync -qat dist/res/${windows-love-distname}/ dist/windows/${APPNAME}/
+	unzip -q dist/res/${windows-love-distname}.zip -d dist/windows/runtime
+	cp -R dist/windows/runtime/${windows-love-distname}/. dist/windows/${APPNAME}/
 	cp dist/${APPNAME}.love dist/windows/
 
 	# Update edition in this version of the .love archive
@@ -121,23 +126,41 @@ dist/windows/${APPNAME}.zip: dist/res/${windows-love-distname}.zip dist/${APPNAM
 	rm dist/windows/res/edition.txt
 	rm -d dist/windows/res
 
-	cat dist/windows/${APPNAME}.love >> dist/windows/${APPNAME}/love.exe
+	cat dist/windows/${APPNAME}/love.exe dist/windows/${APPNAME}.love > dist/windows/${APPNAME}/${APPNAME}.exe
 	rm dist/windows/${APPNAME}.love
-	mv dist/windows/${APPNAME}/love.exe dist/windows/${APPNAME}/${APPNAME}.exe
-	cp -r dist/shared dist/windows/${APPNAME}/
-	cd dist/windows/${APPNAME}; zip ../${APPNAME}.zip -Z store -FS -r . -x .\*
+	rm dist/windows/${APPNAME}/love.exe
+	mkdir -p dist/windows/${APPNAME}/shared/Windows
+	cp shared/Windows/* dist/windows/${APPNAME}/shared/Windows/
+	cp LICENSE.txt dist/windows/${APPNAME}/Quadtastic-LICENSE.txt
+	rm -f "$@"
+	cd dist/windows/${APPNAME}; zip -q -r -0 ../${APPNAME}.zip .
 
-dist/res/${windows-love-distname}.zip:
+dist/res/${windows-love-distname}.zip dist/res/${macos-love-distname}.zip:
 	mkdir -p dist/res
-	cd dist/res; \
-	wget -N https://bitbucket.org/rude/love/downloads/${windows-love-distname}.zip; \
-	unzip ${windows-love-distname}.zip
+	curl --fail --location --retry 3 "$(LOVE_DOWNLOAD_URL)/$(@F)" -o "$@.tmp"
+	unzip -tq "$@.tmp"
+	mv "$@.tmp" "$@"
 
-dist/res/love.app:
-	mkdir -p dist/res
-	cd dist/res; \
-	wget -N https://bitbucket.org/rude/love/downloads/${macos-love-distname}.zip; \
-	unzip ${macos-love-distname}.zip
+dist/macos/${APPNAME}.zip: dist/res/${macos-love-distname}.zip dist/${APPNAME}.love $(SHARED_FILES) Makefile
+	@test -x /usr/libexec/PlistBuddy || { echo 'The macOS target requires macOS (PlistBuddy).'; exit 1; }
+	@test -f 'shared/OS X/lfs.so' || { echo 'Missing shared/OS X/lfs.so for the macOS runtime.'; exit 1; }
+	rm -rf dist/macos
+	mkdir -p dist/macos
+	unzip -q dist/res/${macos-love-distname}.zip -d dist/macos
+	mv dist/macos/love.app dist/macos/${APPNAME}.app
+	cp dist/${APPNAME}.love dist/macos/${APPNAME}.app/Contents/Resources/${APPNAME}.love
+	mkdir -p dist/macos/edition/res
+	printf '%s\n' ${EDITION_MACOS} > dist/macos/edition/res/edition.txt
+	cd dist/macos/edition; zip -q -0 ../${APPNAME}.app/Contents/Resources/${APPNAME}.love res/edition.txt
+	mkdir -p 'dist/macos/${APPNAME}.app/Contents/Resources/shared/OS X'
+	cp 'shared/OS X/'* 'dist/macos/${APPNAME}.app/Contents/Resources/shared/OS X/'
+	mkdir -p 'dist/macos/${APPNAME}.app/Contents/MacOS/shared/OS X'
+	cp 'shared/OS X/'* 'dist/macos/${APPNAME}.app/Contents/MacOS/shared/OS X/'
+	/usr/libexec/PlistBuddy -c 'Set :CFBundleIdentifier ${APPIDENTIFIER}' dist/macos/${APPNAME}.app/Contents/Info.plist
+	/usr/libexec/PlistBuddy -c 'Set :CFBundleName ${APPNAME}' dist/macos/${APPNAME}.app/Contents/Info.plist
+	/usr/libexec/PlistBuddy -c 'Set :CFBundleShortVersionString $(patsubst v%,%,${APPVERSION})' dist/macos/${APPNAME}.app/Contents/Info.plist
+	cp LICENSE.txt dist/macos/Quadtastic-LICENSE.txt
+	cd dist/macos; zip -q -y -r -0 ${APPNAME}.zip ${APPNAME}.app Quadtastic-LICENSE.txt
 
 dist/res/%.icns: res/%.ase
 	mkdir -p dist/res
@@ -147,30 +170,29 @@ dist/res/%.icns: res/%.ase
 	# Run iconutil to create icns file
 	iconutil -c icns dist/res/$*.iconset
 
-aseprite=/Users/moritz/Library/Application\ Support/itch/apps/Aseprite/Aseprite.app/Contents/MacOS/aseprite
 screenshots/turboworkflow.gif: res/turboworkflow-activated.ase Makefile
 	${aseprite} -b res/turboworkflow-activated.ase --scale 1 --save-as screenshots/turboworkflow.gif
 
-${APPNAME}/res/turboworkflow-activated.png: res/turboworkflow-activated.ase
+${APPNAME}/res/turboworkflow-activated.png: $(call asset_source,res/turboworkflow-activated.ase)
 	${aseprite} -b res/turboworkflow-activated.ase --sheet ${APPNAME}/res/turboworkflow-activated.png
 
-${APPNAME}/res/loading.png: res/loading.ase
+${APPNAME}/res/loading.png: $(call asset_source,res/loading.ase)
 	${aseprite} -b res/loading.ase --sheet ${APPNAME}/res/loading.png
 
-${APPNAME}/res/%.png: res/%.ase
+${APPNAME}/res/%.png: $(call asset_source,res/%.ase)
 	${aseprite} -b res/$*.ase --save-as ${APPNAME}/res/$*.png
 
-${APPNAME}/res/icon-32x32.png: res/icon.ase
+${APPNAME}/res/icon-32x32.png: $(call asset_source,res/icon.ase)
 	${aseprite} -b res/icon.ase --scale 2 --save-as ${APPNAME}/res/icon-32x32.png
 
 # hacky way to determine whether we need to remake the version file
 _stored_version = $(shell test -f ${APPNAME}/res/version.txt && cat ${APPNAME}/res/version.txt)
-ifneq "v$(APPVERSION)" "$(_stored_version)"
+ifneq "v$(patsubst v%,%,$(APPVERSION))" "$(_stored_version)"
 .PHONY: ${APPNAME}/res/version.txt
 endif
 
 ${APPNAME}/res/version.txt:
-	echo v${APPVERSION} > ${APPNAME}/res/version.txt
+	printf '%s\n' v$(patsubst v%,%,$(APPVERSION)) > ${APPNAME}/res/version.txt
 
 %.png: %.ase
 	${aseprite} -b $*.ase --save-as $*.png
@@ -181,7 +203,9 @@ ${APPNAME}/res/version.txt:
 	time convert -verbose +dither -alpha set -layers Optimize .tmp/out-static*.png  GIF:- > $*.gif
 	rm .tmp/out-static-*
 
-tests/test_*.lua:
+test check: $(TESTS)
+
+$(TESTS):
 	lua $@
 
 clean:
@@ -198,8 +222,7 @@ ifeq "${_remake_license}" "1"
 endif
 
 LICENSE.txt: res/raw_mit_license.txt
-	cp res/raw_mit_license.txt LICENSE.txt
-	sed -i '' -e 's/\[years\]/${years}/' LICENSE.txt
+	sed -e 's/\[years\]/${years}/' $< > $@
 
 ${APPNAME}/res/copyright.txt: LICENSE.txt
 	head -1 LICENSE.txt > ${APPNAME}/res/copyright.txt
@@ -211,8 +234,8 @@ ifeq "1" "${_remake_libquadtastic}"
 endif
 
 ${APPNAME}/libquadtastic.lua:
-	sed -i '' -e 's/Copyright (c) .* Moritz Neikes/Copyright (c) ${years} Moritz Neikes/' \
-	    Quadtastic/libquadtastic.lua
+	sed -e 's/Copyright (c) .* Moritz Neikes/Copyright (c) ${years} Moritz Neikes/' $@ > $@.tmp
+	mv $@.tmp $@
 
 # Build as $ make release-0.2.0
 # Tag names MUST follow the major.minor.patch pattern.
@@ -319,18 +342,4 @@ release-%: test ${LICENSES} ${DISTFILES}
 	@printf "\e[1mAll done.\e[0m You can now run 'make publish' to publish version $*\n"
 	@printf "Remember to push the new tag, as well as the master and stable branch.\n"
 
-publish: ${DISTFILES}
-	# Check that the version to be released is tagged.
-	@if [[ ! ${APPVERSION} =~ ^[0-9]+.[0-9]+.[0-9]+$$ ]] ; then\
-	  echo "Error: Cannot publish an untagged commit."; false;\
-	fi
-	# Uses itch.io's butler to push dist files to the Quadtastic page on itch.io
-	butler push dist/releases/${APPVERSION}/windows/${APPNAME}.zip \
-	       25a0/quadtastic:${EDITION_WINDOWS}       --userversion ${APPVERSION}
-	butler push dist/releases/${APPVERSION}/macos \
-	       25a0/quadtastic:${EDITION_MACOS}         --userversion ${APPVERSION}
-	butler push dist/releases/${APPVERSION}/love \
-	       25a0/quadtastic:${EDITION_CROSSPLATFORM} --userversion ${APPVERSION}
-	butler push dist/releases/${APPVERSION}/libquadtastic \
-	       25a0/quadtastic:${EDITION_LIBQUADTASTIC} --userversion ${APPVERSION}
 

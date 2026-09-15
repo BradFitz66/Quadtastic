@@ -16,7 +16,7 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
         state.animation_list.last_action = nil
     end
 
-    local mouse_down = (gui_state.input ~= nil and gui_state.input.mouse ~= nil) and
+    local mouse_down = (gui_state ~= nil and gui_state.input ~= nil and gui_state.input.mouse ~= nil and gui_state.input.mouse.buttons ~= nil and gui_state.input.mouse.buttons[1] ~= nil) and
         gui_state.input.mouse.buttons[1].pressed or false
 
     if mouse_down and state.animation_list.initial_click_x == nil then

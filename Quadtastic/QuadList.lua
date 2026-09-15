@@ -71,7 +71,7 @@ local function draw_elements(gui_state, state, elements, last_hovered, quad_boun
 
                     assert(raw_quads.default.w == raw_quads.default.h)
                     local quad_size = raw_quads.default.w
-                    local mouse_down = (gui_state.input ~= nil and gui_state.input.mouse ~= nil) and
+                    local mouse_down = (gui_state.input ~= nil and gui_state.input.mouse ~= nil) and (gui_state.input.mouse.buttons ~= nil) and (gui_state.input.mouse.buttons[1] ~= nil) and
                     gui_state.input.mouse.buttons[1].pressed or false
                     local x, y = gui_state.layout.next_x + 1, gui_state.layout.next_y + 5
                     local w, h = quad_size, quad_size

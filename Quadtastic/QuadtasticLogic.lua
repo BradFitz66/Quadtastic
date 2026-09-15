@@ -926,7 +926,10 @@ function QuadtasticLogic.transitions(interface)
                 -- If the exporter does not define this function, we assume that it can
                 -- export everything.
                 if exporter.can_export then
-                    local success, can_export, msg = pcall(exporter.can_export, data.quads)
+                    local success, can_export, msg = pcall(exporter.can_export, data.quads, {
+                        animations = data.animations,
+                        selected_animation = data.animation_list and data.animation_list.selected,
+                    })
                     if success then
                         if not can_export then
                             interface.show_dialog(S.dialogs.err_cannot_export(msg))
@@ -982,7 +985,11 @@ function QuadtasticLogic.transitions(interface)
         end,
         -- expect this function to fail! Wrap it in a pcall!
         export_with = function(app, data, path, exporter)
-            QuadExport.export({quads=data.quads,animations=data.animations}, exporter, path)
+            QuadExport.export({
+                quads = data.quads,
+                animations = data.animations,
+                selected_animation = data.animation_list and data.animation_list.selected,
+            }, exporter, path)
         end,
 
         choose_quad = function(app, data, basepath)

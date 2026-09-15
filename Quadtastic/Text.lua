@@ -12,6 +12,15 @@ Text.min_width = function(state, text)
   return state.style.font and state.style.font:getWidth(utf8_encode(text))
 end
 
+Text.horizontal_offset = function(textwidth, width, alignment)
+  if alignment == ":" then
+    return math.floor((width - textwidth) / 2)
+  elseif alignment == ">" then
+    return width - textwidth
+  end
+  return 0
+end
+
 -- Returns a table of lines, none of which exceed the given width.
 -- Returns a table with the original text if width is 0 or nil.
 function Text.break_at(state, text, width)
@@ -77,14 +86,7 @@ Text.draw = function(state, x, y, w, h, text, options)
   h = h or textheight
   
   if options then
-    -- center alignment
-    if options.alignment_h == ":" then
-      x = x + w / 2 - textwidth / 2
-
-      -- right alignment
-    elseif options.alignment_h == ">" then
-      x = x + w - textwidth
-    end
+    x = x + Text.horizontal_offset(textwidth, w, options.alignment_h)
 
     -- vertically aligned to the center
     if options.alignment_v == "-" then

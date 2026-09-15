@@ -87,7 +87,7 @@ local function draw_elements(gui_state, state, elements)
                         0
                     )
 
-                    local duration = Inputfield.draw(gui_state,0, 54, nil, nil, tostring(frame.duration),{filter = function(c)
+                    local duration = Inputfield.draw(gui_state,0, 54, 32, nil, tostring(frame.duration),{alignment_h = ":", filter = function(c)
                         return c:match("%d")
                     end})
                     if duration ~= nil then

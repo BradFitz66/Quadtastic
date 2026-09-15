@@ -6,7 +6,7 @@ local Button = require(current_folder .. ".Button")
 local Label = require(current_folder .. ".Label")
 local Frame = require(current_folder .. ".Frame")
 local Layout = require(current_folder .. ".Layout")
-local InputField = require(current_folder .. ".InputField")
+local InputField = require(current_folder .. ".Inputfield")
 local Window = require(current_folder .. ".Window")
 local Scrollpane = require(current_folder .. ".Scrollpane")
 local Tooltip = require(current_folder .. ".Tooltip")
@@ -680,10 +680,11 @@ Quadtastic.draw = function(app, state, gui_state)
                             if frame then
                                 local quad = frame.quad
                                 love.graphics.setColor(255, 255, 255, 255)
-                                local offsetW = anim.flipX and -quad.w*quad.ox or quad.w*quad.ox
-                                local offsetH = anim.flipY and -quad.h*quad.oy or quad.h*quad.oy
-                                local x = (96 / 2) - offsetW
-                                local y = (96 / 2) - offsetH
+                                -- quad.ox/oy are normalized (0–1) fractions of the quad size.
+                                -- Convert to pixel offsets so Love2D places the origin at the
+                                -- center of the 96x96 preview frame for every sprite.
+                                local absOx = (quad.ox or 0) * quad.w
+                                local absOy = (quad.oy or 0) * quad.h
                                 love.graphics.draw(
                                     state.image,
                                     love.graphics.newQuad(
@@ -694,13 +695,13 @@ Quadtastic.draw = function(app, state, gui_state)
                                         state.image:getWidth(),
                                         state.image:getHeight()
                                     ),
-                                    x,
-                                    y,
+                                    96 / 2,
+                                    96 / 2,
                                     0,
                                     anim.flipX and -1 or 1,
                                     anim.flipY and -1 or 1,
-                                    quad.ox,
-                                    quad.oy
+                                    absOx,
+                                    absOy
                                 )
                             end
                         end

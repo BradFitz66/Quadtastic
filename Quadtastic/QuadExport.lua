@@ -18,9 +18,6 @@ QuadExport.export = function(exporting, exporter, filepath)
   -- Use clone of quads table instead of the original one
   local save_data_clone = common.clone({quads = exporting.quads, animations = exporting.animations})
 
-  local filehandle, open_err = io.open(filepath, "w")
-  if not filehandle then error(open_err) end
-
   if not save_data_clone.quads._META then save_data_clone.quads._META = {} end
 
   -- Insert version info into quads
@@ -37,14 +34,33 @@ QuadExport.export = function(exporting, exporter, filepath)
     save_data_clone.quads._META.image_path = rel_path
   end
 
-  local writer = common.get_writer(filehandle)
   local info = {
     filepath = filepath,
+    selected_animation = exporting.selected_animation and common.clone(exporting.selected_animation),
   }
-  local success, export_err = pcall(exporter.export, writer, save_data_clone, info)
-  filehandle:close()
-
-  if not success then error(export_err, 0) end
+  local function write_file(path, export)
+    local filehandle, open_err = io.open(path, exporter.binary and "wb" or "w")
+    if not filehandle then error(open_err, 0) end
+    local writer = function(...)
+      assert(filehandle:write(...))
+    end
+    local success, export_err = pcall(export, writer)
+    local closed, close_err = filehandle:close()
+    if not success then error(export_err, 0) end
+    if not closed then error(close_err, 0) end
+  end
+  if exporter.multi_file then
+    info.write_file = function(filename, export)
+      assert(not filename:find("[/\\]") and filename ~= "." and filename ~= "..",
+             "Export filename must not contain a path.")
+      write_file(tostring(Path(filepath):parent() .. filename), export)
+    end
+    exporter.export(nil, save_data_clone, info)
+  else
+    write_file(filepath, function(writer)
+      exporter.export(writer, save_data_clone, info)
+    end)
+  end
 end
 
 return QuadExport

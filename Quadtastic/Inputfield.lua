@@ -5,8 +5,17 @@ local Text = require(current_folder .. ".Text")
 
 local Inputfield = {}
 
-local function handle_input(state, _, y, w, h, content, text_x, filter)
+local function text_position(state, x, w, content, options)
+  local width = Text.min_width(state, content)
+  local available = math.max(0, w - 8)
+  local offset = width > available and available - width
+      or Text.horizontal_offset(width, available, options and options.alignment_h)
+  return math.floor(x + 4 + offset)
+end
+
+local function handle_input(state, x, y, w, h, content, text_x, options)
   assert(state.input)
+  local filter = options.filter
   -- Track whether the cursor was moved. In that case we will always display it
   local cursor_moved = false
   
@@ -132,11 +141,15 @@ local function handle_input(state, _, y, w, h, content, text_x, filter)
 
   -- Calculate print offset based on state's cursor
   do
-    -- Move text start to the left if text width is larger than field width
+    text_x = text_position(state, x, w, content, options)
     local cursor_text_width = Text.min_width(state,
       string.sub(content, 1, state.input_field.cursor_pos))
-    if cursor_text_width + 20 > w - 6 then
-      text_x = text_x - (cursor_text_width + 20 - (w - 6))
+    local cursor_x = text_x + cursor_text_width
+    local left, right = x + 4, x + math.max(4, w - 4)
+    if cursor_x < left then
+      text_x = text_x + left - cursor_x
+    elseif cursor_x > right then
+      text_x = text_x - (cursor_x - right)
     end
   end
 
@@ -174,7 +187,7 @@ local function handle_input(state, _, y, w, h, content, text_x, filter)
     -- Find the max. length of characters that fit in delta
     local m_width = Text.min_width(state, "m")
     -- Assume that the text is just a ton of ms
-    local cursor_pos = math.floor(delta / m_width)
+    local cursor_pos = math.max(0, math.min(#content, math.floor(delta / m_width)))
     local actual_width = Text.min_width(state, string.sub(content, 1, cursor_pos))
     local last_letter_width = 0
     -- Make sure that we didn't mess up the estimation
@@ -196,11 +209,6 @@ local function handle_input(state, _, y, w, h, content, text_x, filter)
     if cursor_pos ~= state.input_field.cursor_pos then
       cursor_moved = true
     end
-    if center_text then
-      -- Center the cursor position in the text field
-      cursor_pos = cursor_pos - math.floor((w - 6) / (2 * m_width))
-    end
-
     -- Limit cursor position
     cursor_pos_at_mousex = math.max(0, math.min(#content, cursor_pos))
   end
@@ -286,7 +294,7 @@ Inputfield.draw = function(state, x, y, w, h, content, options)
   end
 
   -- Label position
-  local text_x = x + margin_x
+  local text_x = text_position(state, x, w, content, options)
 
   local committed_content
   if state and state.input then
@@ -312,15 +320,10 @@ Inputfield.draw = function(state, x, y, w, h, content, options)
         options={}
       end
 
-      content, text_x = handle_input(state, x, y, w, h, content, text_x,  options.filter)
+      content, text_x = handle_input(state, x, y, w, h, content, text_x, options)
       if imgui.was_key_pressed(state, "return") then
         committed_content = content
         imgui.consume_key_press(state, "return")
-      end
-    else
-      -- The widget does not have the keyboard focus
-      if textwidth + 20 > w - 6 then
-        text_x = text_x - (textwidth + 20 - (w - 6))
       end
     end
   end
@@ -329,12 +332,17 @@ Inputfield.draw = function(state, x, y, w, h, content, options)
   local text = content
   if #content == 0 and options and options.ghost_text then
     text = options.ghost_text
+    text_x = text_position(state, x, w, text, options)
     imgui.push_style(state, "font_color", state.style.palette.shades.brightest(128))
   else
     imgui.push_style(state, "font_color", state.style.palette.shades.brightest)
   end
 
-  Text.draw(state, text_x, y + margin_y, w, h, text, options)
+  local draw_options = {}
+  for key, value in pairs(options or {}) do
+    if key ~= "alignment_h" then draw_options[key] = value end
+  end
+  Text.draw(state, text_x, y + margin_y, w, h, text, draw_options)
   imgui.pop_style(state, "font_color")
 
   -- Restore state
